@@ -14,30 +14,27 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.navigation.NavController
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.eventradar.navigation.Screen
 
 @Composable
-fun LoginScreen(
+fun RegisterScreen(
     authViewModel: AuthViewModel,
-    onNavigateToRegister:() -> Unit
+    onNavigateToLogin: () -> Unit,
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val authState = authViewModel.authState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -46,7 +43,7 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Prijavi se",
+        Text("Registruj se",
             style = androidx.compose.material3.MaterialTheme.typography.headlineMedium
         )
         Spacer(modifier = Modifier.height(16.dp))
@@ -71,18 +68,17 @@ fun LoginScreen(
 
         Button (
             onClick = {
-                authViewModel.login(email,password)
+                authViewModel.register(email, password)
             },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = authState.value != AuthState.Loading
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Prijavi se")
+            Text(text = "Registruj se")
         }
 
         TextButton(
-            onClick = onNavigateToRegister
+            onClick = onNavigateToLogin
         ) {
-            Text("Nemaš nalog? Registruj se")
+            Text("Imaš nalog? Prijavi se")
         }
     }
 }
