@@ -14,6 +14,7 @@
     <string name="login_title">Sign In</string>
     <string name="login_button">Sign In</string>
     <string name="no_account_prompt">Don\'t have an account? Sign Up</string>
+    <string name="login_successful">Login Successful!</string>
 
     <!-- Validation Errors -->
     <string name="error_field_required">This field is required</string>
