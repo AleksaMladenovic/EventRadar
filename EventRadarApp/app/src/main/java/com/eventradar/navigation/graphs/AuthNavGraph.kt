@@ -10,18 +10,32 @@ import com.eventradar.ui.auth.login.LoginViewModel
 import com.eventradar.ui.auth.register.RegisterViewModel
 import com.eventradar.ui.auth.login.LoginScreen
 import com.eventradar.ui.auth.register.RegisterScreen
+import com.eventradar.ui.welcome.WelcomeScreen
 
 fun NavGraphBuilder.authNavGraph(navController: NavController) {
     navigation(
-        startDestination = Routes.LOGIN_SCREEN,
+        startDestination = Routes.WELCOME_SCREEN,
         route = Routes.AUTH_GRAPH
     ) {
+        composable(Routes.WELCOME_SCREEN) {
+            WelcomeScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Routes.LOGIN_SCREEN)
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Routes.REGISTER_SCREEN)
+                }
+            )
+        }
+
         composable(Routes.LOGIN_SCREEN) {
             val loginViewModel: LoginViewModel = hiltViewModel() // Kreiramo ViewModel ovde
             LoginScreen(
                 loginViewModel = loginViewModel,
                 onNavigateToRegister = {
-                    navController.navigate(Routes.REGISTER_SCREEN)
+                    navController.navigate(Routes.REGISTER_SCREEN){
+                        popUpTo(Routes.LOGIN_SCREEN){inclusive = true}
+                    }
                 },
                 onLoginSuccess = {
                     // Nakon uspeha, idi na glavni graf i obriši ceo auth graf iz istorije
@@ -38,7 +52,9 @@ fun NavGraphBuilder.authNavGraph(navController: NavController) {
             RegisterScreen(
                 registerViewModel = registerViewModel,
                 onNavigateToLogin = {
-                    navController.navigate(Routes.LOGIN_SCREEN)
+                    navController.navigate(Routes.LOGIN_SCREEN){
+                        popUpTo(Routes.REGISTER_SCREEN) {inclusive = true}
+                    }
                 },
                 onRegisterSuccess = {
                     navController.navigate(Routes.MAIN_GRAPH) {
