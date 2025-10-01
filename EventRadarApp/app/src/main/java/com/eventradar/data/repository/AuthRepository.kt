@@ -1,5 +1,6 @@
 package com.eventradar.data.repository
 
+import android.net.Uri
 import com.eventradar.data.model.User
 import com.eventradar.ui.auth.AuthState
 import com.google.firebase.auth.FirebaseAuth
@@ -8,9 +9,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
 
-class AuthRepository(private val auth: FirebaseAuth) {
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+class AuthRepository @Inject constructor(
+    private val auth: FirebaseAuth,
+    private val firestore: FirebaseFirestore,
+    private val storageRepository: StorageRepository
+)  {
 
     fun getAuthStateFlow(): StateFlow<AuthState> {
         val flow = MutableStateFlow<AuthState>(AuthState.Unauthenticated)
@@ -40,32 +45,38 @@ class AuthRepository(private val auth: FirebaseAuth) {
         firstName: String,
         lastName: String,
         username: String,
-        phone: String
+        phone: String,
+        profileImageUri: Uri?
     ): Result<Unit> {
         return try {
-            // Korak 1: Kreiraj korisnika u Firebase Authentication
+            // Korak 1: Kreiraj korisnika u Auth
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
-            val firebaseUser = authResult.user ?: throw Exception("Firebase user is null after registration.")
-            val uid = firebaseUser.uid
+            val uid = authResult.user?.uid ?: throw Exception("UID is null after registration.")
 
-            // Korak 2: Kreiraj naš User objekat sa svim podacima
+            // Korak 2: Upload-uj sliku ako postoji
+            val profileImageUrl = if (profileImageUri != null) {
+                // Pozivamo StorageRepository
+                storageRepository.uploadProfileImage(profileImageUri).getOrNull()
+            } else {
+                null
+            }
+
+            // Korak 3: Kreiraj User objekat sa URL-om slike
             val newUser = User(
                 uid = uid,
                 firstName = firstName,
                 lastName = lastName,
                 username = username,
                 phone = phone,
-                email = email // Sačuvaj i email u Firestore za lakši pristup
+                email = email,
+                profileImageUrl = profileImageUrl // <-- Dodajemo URL slike
             )
 
-            // Korak 3: Sačuvaj User objekat u Firestore kolekciju "users"
-            // Dokument će imati isti ID kao i korisnikov UID
+            // Korak 4: Sačuvaj User objekat u Firestore
             firestore.collection("users").document(uid).set(newUser).await()
 
-            // Ako je sve prošlo, vrati uspeh
             Result.success(Unit)
         } catch (e: Exception) {
-            // Ako bilo šta pukne (kreiranje u Auth ili pisanje u Firestore), vrati grešku
             Result.failure(e)
         }
     }

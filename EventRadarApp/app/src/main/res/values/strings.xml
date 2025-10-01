@@ -28,4 +28,13 @@
     <string name="welcome_login_button">Sign In</string>
     <string name="welcome_register_button">Get Started</string>
 
+    <!-- Profile Image Picker Dialog -->
+    <string name="image_picker_title">Choose a picture</string>
+    <string name="image_picker_description">Where would you like to add a profile picture from?</string>
+    <string name="image_picker_camera">Camera</string>
+    <string name="image_picker_gallery">Gallery</string>
+
+    <!-- Content Descriptions for Accessibility -->
+    <string name="cd_profile_image">Profile picture</string>
+    <string name="cd_add_profile_image">Add profile picture</string>
 </resources>

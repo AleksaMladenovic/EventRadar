@@ -1,5 +1,7 @@
 package com.eventradar.ui.auth.register
 
+import android.net.Uri
+
 data class RegistrationFormState(
     val firstName: String = "",
     val lastName: String = "",
@@ -13,5 +15,6 @@ data class RegistrationFormState(
     val phoneError: Int? = null,
     val emailError: Int? = null,
     val passwordError: Int? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val profileImageUri: Uri? = null, // <-- NOVO POLJE
 )
