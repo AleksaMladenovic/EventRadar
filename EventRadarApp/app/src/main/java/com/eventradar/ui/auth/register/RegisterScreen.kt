@@ -38,7 +38,7 @@ fun RegisterScreen(
         registerViewModel.registerEvent.collect { event ->
             when (event) {
                 is RegisterEvent.RegisterSuccess -> {
-                    Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.registration_successful), Toast.LENGTH_SHORT).show()
                     onRegisterSuccess() // Javljamo navigaciji da ide dalje
                 }
                 is RegisterEvent.RegisterError -> {
