@@ -1,5 +1,6 @@
 package com.eventradar.ui.auth.register
 
+import android.net.Uri
 import android.util.Patterns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -30,7 +31,6 @@ class RegisterViewModel @Inject constructor(
 
     private val _registerEvent = MutableSharedFlow<RegisterEvent>()
     val registerEvent = _registerEvent.asSharedFlow()
-
     // --- Funkcije za ažuriranje stanja forme ---
     fun onFirstNameChanged(value: String) {
         _formState.update { it.copy(firstName = value, firstNameError = null) }
@@ -51,6 +51,11 @@ class RegisterViewModel @Inject constructor(
         _formState.update { it.copy(password = value, passwordError = null) }
     }
 
+    // NOVO: Funkcija za promenu slike
+    fun onProfileImageChanged(uri: Uri?) {
+        _formState.update { it.copy(profileImageUri = uri) }
+    }
+
     fun register() {
         viewModelScope.launch {
             if (validateForm()) {
@@ -63,7 +68,8 @@ class RegisterViewModel @Inject constructor(
                     firstName = state.firstName,
                     lastName = state.lastName,
                     username = state.username,
-                    phone = state.phone
+                    phone = state.phone,
+                    profileImageUri = state.profileImageUri
                 )
 
                 _formState.update { it.copy(isLoading = false) }

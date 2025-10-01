@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eventradar.R
+import com.eventradar.ui.components.ProfileImagePicker
 
 @Composable
 fun RegisterScreen(
@@ -55,10 +56,24 @@ fun RegisterScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+
+        Spacer(modifier = Modifier.height(32.dp)) // Dodajemo malo prostora na vrhu
+
         Text(
             text = stringResource(id = R.string.register_title),
             style = MaterialTheme.typography.headlineLarge
         )
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- DODAJEMO PROFILE IMAGE PICKER ---
+        ProfileImagePicker(
+            imageUri = formState.profileImageUri,
+            onImageSelected = { uri ->
+                registerViewModel.onProfileImageChanged(uri)
+            }
+        )
+        //
+
         Spacer(modifier = Modifier.height(24.dp))
 
         // --- Polja forme sada zovu funkcije iz RegisterViewModel-a ---
