@@ -28,7 +28,7 @@ fun LoginScreen(
         loginViewModel.loginEvent.collect { event ->
             when (event) {
                 is LoginEvent.LoginSuccess -> {
-                    Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.login_successful), Toast.LENGTH_SHORT).show()
                     onLoginSuccess() // Javljamo navigaciji da je vreme da se pređe dalje
                 }
                 is LoginEvent.LoginError -> {
