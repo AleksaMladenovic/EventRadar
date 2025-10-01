@@ -8,22 +8,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.eventradar.navigation.Routes
 import com.eventradar.ui.auth.AuthViewModel
+import com.eventradar.ui.main.MainScreen
 import com.eventradar.ui.map.MapScreen
 
 fun NavGraphBuilder.mainNavGraph(navController: NavController) {
     navigation(
-        startDestination = Routes.MAP_SCREEN,
+        startDestination = "main_flow",
         route = Routes.MAIN_GRAPH
     ) {
-        composable(Routes.MAP_SCREEN) {
-            val authViewModel: AuthViewModel = hiltViewModel() // ViewModel za odjavu
-            MapScreen(
-                onLogout = {
-                    authViewModel.signOut() // AuthViewModel će promeniti stanje
-                    // Ne moramo eksplicitno da navigiramo, RootNavGraph će to uraditi!
-                }
-            )
+        composable("main_flow") {
+            MainScreen()
         }
-        // Ovde ćeš kasnije dodati composable(Routes.PROFILE_SCREEN) { ... }
     }
 }

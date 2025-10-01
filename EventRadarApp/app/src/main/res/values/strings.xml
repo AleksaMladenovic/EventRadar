@@ -39,4 +39,10 @@
     <!-- Content Descriptions for Accessibility -->
     <string name="cd_profile_image">Profile picture</string>
     <string name="cd_add_profile_image">Add profile picture</string>
+
+    <!-- Bottom Navigation -->
+    <string name="bottom_nav_map">Map</string>
+    <string name="bottom_nav_events">Events</string>
+    <string name="bottom_nav_ranking">Ranking</string>
+    <string name="bottom_nav_profile">Profile</string>
 </resources>
