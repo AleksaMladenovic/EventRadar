@@ -19,7 +19,7 @@ import com.eventradar.ui.auth.AuthState
 import com.eventradar.ui.auth.AuthViewModel
 
 @Composable
-fun MapScreen( authViewModel: AuthViewModel){
+fun MapScreen( onLogout: ()->Unit){
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -28,7 +28,7 @@ fun MapScreen( authViewModel: AuthViewModel){
         Text(text = "Home Page", fontSize = 32.sp)
 
         TextButton(onClick = {
-            authViewModel.signout()
+            onLogout()
         }) {
             Text(text = "Sign out")
         }

@@ -1,3 +1,25 @@
 <resources>
     <string name="app_name">EventRadarApp</string>
+
+    <!-- Registration/Login Screen -->
+    <string name="register_title">Sign Up</string>
+    <string name="first_name_label">First Name</string>
+    <string name="last_name_label">Last Name</string>
+    <string name="username_label">Username</string>
+    <string name="phone_label">Phone Number</string>
+    <string name="email_label">Email</string>
+    <string name="password_label">Password</string>
+    <string name="register_button">Sign Up</string>
+    <string name="already_have_account">Already have an account? Sign In</string>
+    <string name="login_title">Sign In</string>
+    <string name="login_button">Sign In</string>
+    <string name="no_account_prompt">Don\'t have an account? Sign Up</string>
+
+    <!-- Validation Errors -->
+    <string name="error_field_required">This field is required</string>
+    <string name="error_invalid_email">Please enter a valid email</string>
+    <string name="error_password_too_short">Password must be at least 6 characters</string>
+    <string name="error_username_taken">This username is already taken</string>
+    <string name="error_login_failed">Login failed. Please check your credentials.</string>
+
 </resources>
