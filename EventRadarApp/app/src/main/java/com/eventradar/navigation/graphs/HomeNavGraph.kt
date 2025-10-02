@@ -2,6 +2,7 @@ package com.eventradar.navigation.graphs
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -12,14 +13,16 @@ import com.eventradar.ui.profile.ProfileScreen
 import com.eventradar.ui.ranking.RankingScreen
 
 @Composable
-fun HomeNavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
+fun HomeNavGraph(navController: NavHostController, rootNavController: NavController, modifier: Modifier = Modifier) {
     NavHost(
         navController = navController,
         startDestination = Routes.MAP_SCREEN,
         modifier = modifier
     ) {
         composable(Routes.MAP_SCREEN) {
-            MapScreen()
+            MapScreen(onNavigateToAddEvent = { latLng ->
+                rootNavController.navigate("add_event/${latLng.latitude}/${latLng.longitude}")
+            })
         }
         composable(Routes.EVENTS_LIST_SCREEN) {
             EventsListScreen()

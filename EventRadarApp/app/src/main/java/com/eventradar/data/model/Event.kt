@@ -6,16 +6,17 @@ import com.google.firebase.firestore.ServerTimestamp
 
 data class Event(
     val id: String = "",
-
     val name: String = "",
     val description: String = "",
-    val category: String = "",
-
+    val category: String = EventCategory.OTHER.name,
     val location: GeoPoint = GeoPoint(0.0, 0.0),
-
-    @ServerTimestamp // Anotacija koja kaže Firestore-u da sam upiše vreme servera
-    val createdAt: Timestamp? = null,
-
+    @ServerTimestamp val createdAt: Timestamp? = null,
     val creatorId: String = "",
-    val creatorName: String = ""
+    val creatorName: String = "",
+
+    val eventTimestamp: Timestamp? = null,
+    val ageRestriction: Int = 0,
+    val price: Double = 0.0,
+    val isFree: Boolean = true,
+    val eventImageUrl: String? = null
 )

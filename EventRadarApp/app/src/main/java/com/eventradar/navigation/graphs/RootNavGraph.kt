@@ -16,7 +16,6 @@ import com.eventradar.ui.welcome.WelcomeScreen
 @Composable
 fun RootNavGraph() {
     val navController = rememberNavController()
-    // Kreiramo AuthViewModel na najvišem nivou, jer nam treba za proveru stanja
     val authViewModel: AuthViewModel = hiltViewModel()
     val authState by authViewModel.authState.collectAsStateWithLifecycle()
 

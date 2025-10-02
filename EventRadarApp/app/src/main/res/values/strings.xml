@@ -46,8 +46,28 @@
     <string name="bottom_nav_ranking">Ranking</string>
     <string name="bottom_nav_profile">Profile</string>
 
-    <!-- Map -->
+    <!-- Map Screen -->
     <string name="location_permission_required">Location permission is required to use the map.</string>
-    <string name="my_location_title">My Location</string>
-    <string name="my_location_snippet">This is where I am</string>
+    <string name="cd_center_marker">Map marker for new event location</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="confirm_button">Confirm</string>
+    <string name="cd_confirm_location">Confirm Location</string>
+    <string name="cd_cancel_add_event">Cancel adding event</string>
+    <string name="cd_add_event">Add Event</string>
+
+    <!-- Add Event Dialog/Screen -->
+    <string name="add_event_title">Add New Event</string>
+    <string name="add_event_name_label">Event Name</string>
+    <string name="add_event_description_label">Description</string>
+    <string name="add_event_category_label">Category</string>
+    <string name="add_event_button">Add</string>
+    <string name="error_all_fields_required">All fields are required.</string>
+    <string name="error_user_or_location_not_available">User or location not available.</string>
+
+    <!-- Add Event Screen -->
+    <string name="add_event_screen_title">Add New Event</string>
+    <string name="event_name_label">Event Name</string>
+    <string name="description_label">Description</string>
+    <string name="category_label">Category</string>
+    <string name="save_event_button">Save Event</string>
 </resources>

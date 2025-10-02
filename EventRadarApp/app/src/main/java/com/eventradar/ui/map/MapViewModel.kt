@@ -23,8 +23,6 @@ import javax.inject.Inject
 class MapViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val eventRepository: EventRepository,
-    private val auth: FirebaseAuth,
-    private val userRepository: UserRepository,
 ) : ViewModel() {
 
     private val _mapState = MutableStateFlow(MapState())
@@ -59,7 +57,6 @@ class MapViewModel @Inject constructor(
                 result.onSuccess { events ->
                     _mapState.update { it.copy(events = events) }
                 }.onFailure {
-                    //TODO: Obraditi gresku na primer Toast
                     println("Error fetching events: ${it.message}")
                 }
 
@@ -67,46 +64,12 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun onShowAddEventDialog() {
-        _mapState.update { it.copy(isAddEventDialogShown = true, addEventError = null) }
+    fun onEnterAddEventMode() {
+        _mapState.update { it.copy(isInAddEventMode = true) }
     }
 
-    fun onDismissAddEventDialog() {
-        _mapState.update { it.copy(isAddEventDialogShown = false) }
+    fun onExitAddEventMode() {
+        _mapState.update { it.copy(isInAddEventMode = false) }
     }
 
-    fun addEvent(name: String, description: String, category: String) {
-        viewModelScope.launch {
-            // Validacija
-            if (name.isBlank() || description.isBlank() || category.isBlank()) {
-                _mapState.update { it.copy(addEventError = "All fields are required.") }
-                return@launch
-            }
-
-            val currentUser = userRepository.getCurrentUser()
-            val currentLocation = _mapState.value.lastKnownLocation
-
-            if (currentUser == null || currentLocation == null) {
-                _mapState.update { it.copy(addEventError = "User or location not available.") }
-                return@launch
-            }
-
-            val newEvent = Event(
-                name = name,
-                description = description,
-                category = category,
-                location = GeoPoint(currentLocation.latitude, currentLocation.longitude),
-                creatorId = currentUser.uid,
-                creatorName = currentUser.username
-            )
-
-            eventRepository.addEvent(newEvent).onSuccess {
-                // Ako je uspešno, samo zatvori dijalog.
-                // Firestore listener će automatski osvežiti listu događaja.
-                onDismissAddEventDialog()
-            }.onFailure { error ->
-                _mapState.update { it.copy(addEventError = error.message) }
-            }
-        }
-    }
 }

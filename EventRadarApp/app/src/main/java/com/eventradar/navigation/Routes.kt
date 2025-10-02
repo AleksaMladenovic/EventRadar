@@ -12,4 +12,5 @@ object Routes {
     const val PROFILE_SCREEN = "profile"
     const val EVENTS_LIST_SCREEN = "events_list"
     const val RANKING_SCREEN = "ranking"
+    const val ADD_EVENT_SCREEN = "add_event/{lat}/{lng}"
 }
