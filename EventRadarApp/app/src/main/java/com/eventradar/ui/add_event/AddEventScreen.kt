@@ -30,7 +30,7 @@ import java.util.Locale
 @Composable
 fun AddEventScreen(
     addEventViewModel: AddEventViewModel = hiltViewModel(),
-    onEventAdded: () -> Unit // Lambda za povratak na prethodni ekran
+    onEventAdded: () -> Unit
 ) {
     val formState by addEventViewModel.formState.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -40,16 +40,14 @@ fun AddEventScreen(
     val timePickerState = rememberTimePickerState()
 
     val focusManager = LocalFocusManager.current
-
     val context = LocalContext.current
 
-    // Slušamo događaje za uspeh/grešku
     LaunchedEffect(Unit) {
         addEventViewModel.addEventResult.collectLatest { result ->
             when (result) {
                 is AddEventResult.Success -> {
-                    Toast.makeText(context, "Event added successfully!", Toast.LENGTH_SHORT).show()
-                    onEventAdded() // Vrati se na mapu
+                    Toast.makeText(context, R.string.toast_event_added_success, Toast.LENGTH_SHORT).show()
+                    onEventAdded()
                 }
                 is AddEventResult.Error -> {
                     Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
@@ -71,7 +69,6 @@ fun AddEventScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Polje za ime događaja
         OutlinedTextField(
             value = formState.name,
             onValueChange = { addEventViewModel.onNameChange(it) },
@@ -84,7 +81,6 @@ fun AddEventScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Polje za opis
         OutlinedTextField(
             value = formState.description,
             onValueChange = { addEventViewModel.onDescriptionChange(it) },
@@ -97,80 +93,75 @@ fun AddEventScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Dropdown za kategoriju
         CategoryDropdown(
             selectedCategory = formState.category,
             onCategorySelected = { addEventViewModel.onCategoryChange(it) }
         )
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Polje za datum
         val dateFormatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
         OutlinedTextField(
             value = if (formState.eventDate != null) dateFormatter.format(formState.eventDate) else "",
             onValueChange = {},
             readOnly = true,
-            label = { Text("Event Date") },
+            label = { Text(stringResource(R.string.event_date_label)) },
             modifier = Modifier
                 .fillMaxWidth()
-                .onFocusChanged({focusState-> if(focusState.isFocused) showDatePicker = true }),
+                .onFocusChanged { focusState -> if (focusState.isFocused) showDatePicker = true },
             isError = formState.dateError != null,
-            supportingText = { /* ... prikaži grešku ... */ }
+            supportingText = {
+                formState.dateError?.let { Text(stringResource(id = it)) }
+            }
         )
-
-
-
         Spacer(modifier = Modifier.height(16.dp))
 
-
-        // Polje za vreme
         OutlinedTextField(
             value = formState.eventTime,
             onValueChange = {},
             readOnly = true,
-            label = { Text("Event Time") }, // Dodaj string resurs
+            label = { Text(stringResource(R.string.event_time_label)) },
             modifier = Modifier
                 .fillMaxWidth()
-                .onFocusChanged({focusState-> if(focusState.isFocused) showTimePicker = true }),
+                .onFocusChanged { focusState -> if (focusState.isFocused) showTimePicker = true },
             isError = formState.timeError != null,
-            supportingText = { /* prikaži grešku */ }
+            supportingText = {
+                formState.timeError?.let { Text(stringResource(id = it)) }
+            }
         )
+        Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("18+ Event", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.age_restriction_label), style = MaterialTheme.typography.bodyLarge)
             Switch(
                 checked = formState.ageRestriction,
                 onCheckedChange = { addEventViewModel.onAgeRestrictionChanged(it) }
             )
         }
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Polje za Cenu
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Free Event", style = MaterialTheme.typography.bodyLarge)
+            Text(stringResource(R.string.free_event_label), style = MaterialTheme.typography.bodyLarge)
             Switch(
                 checked = formState.isFree,
                 onCheckedChange = { addEventViewModel.onIsFreeChanged(it) }
             )
         }
 
-        // AnimatedVisibility će lepo prikazati ili sakriti polje za cenu
         AnimatedVisibility(visible = !formState.isFree) {
             Column {
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = formState.price,
                     onValueChange = { addEventViewModel.onPriceChanged(it) },
-                    label = { Text("Price (RSD)") },
+                    label = { Text(stringResource(R.string.price_label)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = formState.priceError != null,
@@ -182,7 +173,6 @@ fun AddEventScreen(
         }
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Dugme za čuvanje
         Button(
             onClick = { addEventViewModel.onSaveEvent() },
             modifier = Modifier.fillMaxWidth(),
@@ -194,29 +184,30 @@ fun AddEventScreen(
                 Text(stringResource(id = R.string.save_event_button))
             }
         }
-
-
     }
+
     if (showDatePicker) {
         DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
+            onDismissRequest = {
+                showDatePicker = false
+                focusManager.clearFocus()
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
                         datePickerState.selectedDateMillis?.let { millis ->
-                            // Pozivamo ViewModel sa izabranim datumom
                             addEventViewModel.onDateChanged(Date(millis))
-                            focusManager.clearFocus()
                         }
                         showDatePicker = false
+                        focusManager.clearFocus()
                     }
-                ) { Text("OK") }
+                ) { Text(stringResource(R.string.dialog_ok)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showDatePicker = false
                     focusManager.clearFocus()
-                }) { Text("Cancel") }
+                }) { Text(stringResource(R.string.dialog_cancel)) }
             }
         ) {
             DatePicker(state = datePickerState)
@@ -224,11 +215,12 @@ fun AddEventScreen(
     }
 
     if (showTimePicker) {
-
-        // TimePickerDialog je malo drugačiji, pravimo ga od AlertDialog-a
         AlertDialog(
-            onDismissRequest = { showTimePicker = false },
-            title = { Text("Select Time") },
+            onDismissRequest = {
+                showTimePicker = false
+                focusManager.clearFocus()
+            },
+            title = { Text(stringResource(R.string.select_time_dialog_title)) },
             text = {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     TimePicker(state = timePickerState)
@@ -241,18 +233,16 @@ fun AddEventScreen(
                         showTimePicker = false
                         focusManager.clearFocus()
                     }
-                ) { Text("OK") }
+                ) { Text(stringResource(R.string.dialog_ok)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showTimePicker = false
                     focusManager.clearFocus()
-                }) { Text("Cancel") }
+                }) { Text(stringResource(R.string.dialog_cancel)) }
             }
         )
     }
-
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

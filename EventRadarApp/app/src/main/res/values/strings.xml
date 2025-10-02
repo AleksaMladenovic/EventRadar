@@ -55,11 +55,21 @@
     <string name="cd_cancel_add_event">Cancel adding event</string>
     <string name="cd_add_event">Add Event</string>
 
-    <!-- Add Event Dialog/Screen -->
+    <!-- Add Event Screen -->
     <string name="add_event_screen_title">Add New Event</string>
     <string name="event_name_label">Event Name</string>
     <string name="description_label">Description</string>
     <string name="category_label">Category</string>
+    <string name="event_date_label">Event Date</string>
+    <string name="event_time_label">Event Time</string>
+    <string name="select_time_dialog_title">Select Time</string>
+    <string name="age_restriction_label">18+ Event</string>
+    <string name="free_event_label">Free Event</string>
+    <string name="price_label">Price (RSD)</string>
     <string name="save_event_button">Save Event</string>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="toast_event_added_success">Event added successfully!</string>
     <string name="error_invalid_price">Please enter a valid price</string>
+
 </resources>
