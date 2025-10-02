@@ -45,6 +45,7 @@ fun MapScreen(
 ){
     val mapState by mapViewModel.mapState.collectAsStateWithLifecycle()
     var hasLocationPermission by remember { mutableStateOf(false) }
+    var isInitialCameraAnimationDone by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -66,8 +67,8 @@ fun MapScreen(
     val cameraPositionState = rememberCameraPositionState ()
 
     LaunchedEffect(mapState.lastKnownLocation) {
-        mapState.lastKnownLocation?.let { location ->
-            val userLatLng = LatLng(location.latitude, location.longitude)
+        if(mapState.lastKnownLocation!=null&& !isInitialCameraAnimationDone){
+            val userLatLng = LatLng(mapState.lastKnownLocation!!.latitude, mapState.lastKnownLocation!!.longitude)
 
             cameraPositionState.animate(
                 update = CameraUpdateFactory.newCameraPosition(
@@ -75,6 +76,7 @@ fun MapScreen(
                 ),
                 durationMs = 1000
             )
+            isInitialCameraAnimationDone = true
         }
     }
 
