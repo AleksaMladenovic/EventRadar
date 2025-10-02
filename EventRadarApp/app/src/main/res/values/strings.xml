@@ -45,4 +45,7 @@
     <string name="bottom_nav_events">Events</string>
     <string name="bottom_nav_ranking">Ranking</string>
     <string name="bottom_nav_profile">Profile</string>
+
+    <!-- Map -->
+    <string name="location_permission_required">Location permission is required to use the map.</string>
 </resources>
