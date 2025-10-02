@@ -17,15 +17,26 @@ import androidx.navigation.NavController
 import com.eventradar.navigation.Screen
 import com.eventradar.ui.auth.AuthState
 import com.eventradar.ui.auth.AuthViewModel
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.rememberCameraPositionState
 
 @Composable
 fun MapScreen(){
-    Column(
+    val cameraPositionState = rememberCameraPositionState ()
+
+    GoogleMap(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(text = "Map screen", fontSize = 32.sp)
+        cameraPositionState = cameraPositionState,
+        properties = MapProperties(
+            isMyLocationEnabled = false,
+        ),
+        uiSettings = MapUiSettings(
+            zoomControlsEnabled = false,
+            myLocationButtonEnabled = false,
+        )
+    ){
 
     }
 }

@@ -1,3 +1,11 @@
+import java.util.Properties
+
+val localProperties = Properties()
+val localPropertiesFile = project.rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -39,6 +47,14 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+    defaultConfig{
+        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY")?:""
+
+        buildConfigField("String", "MAPS_API_KEY","\"$mapsApiKey\"")
+
+        resValue("string", "maps_api_key", mapsApiKey)
     }
 }
 
@@ -61,6 +77,8 @@ dependencies {
     implementation(libs.firebase.storage.ktx)
     implementation(libs.coil.compose)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     testImplementation(libs.junit)
