@@ -11,6 +11,7 @@ import androidx.navigation.navigation
 import com.eventradar.navigation.Routes
 import com.eventradar.ui.add_event.AddEventScreen
 import com.eventradar.ui.auth.AuthViewModel
+import com.eventradar.ui.event_details.EventDetailsScreen
 import com.eventradar.ui.main.MainScreen
 import com.eventradar.ui.map.MapScreen
 
@@ -35,5 +36,16 @@ fun NavGraphBuilder.mainNavGraph(navController: NavController) {
                 }
             )
         }
+        composable(
+            route = Routes.EVENT_DETAILS_SCREEN,
+            arguments = listOf(
+                navArgument("eventId") {
+                    type = NavType.StringType
+                }
+            )
+        ) {
+            EventDetailsScreen()
+        }
+
     }
 }

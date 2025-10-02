@@ -20,9 +20,15 @@ fun HomeNavGraph(navController: NavHostController, rootNavController: NavControl
         modifier = modifier
     ) {
         composable(Routes.MAP_SCREEN) {
-            MapScreen(onNavigateToAddEvent = { latLng ->
-                rootNavController.navigate("add_event/${latLng.latitude}/${latLng.longitude}")
-            })
+            MapScreen(
+                onNavigateToAddEvent = { latLng ->
+                    rootNavController.navigate("add_event/${latLng.latitude}/${latLng.longitude}")
+                },
+                onNavigateToEventDetails = { eventId ->
+                    rootNavController.navigate("event_details/$eventId")
+                }
+
+            )
         }
         composable(Routes.EVENTS_LIST_SCREEN) {
             EventsListScreen()

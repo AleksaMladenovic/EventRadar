@@ -72,4 +72,13 @@
     <string name="toast_event_added_success">Event added successfully!</string>
     <string name="error_invalid_price">Please enter a valid price</string>
 
+    <!-- Event Details Screen -->
+    <string name="event_details_loading">Loading event details...</string>
+    <string name="event_details_error">Failed to load event details.</string>
+    <string name="event_created_by">Created by: %1$s</string>
+    <string name="event_price_free">Free</string>
+    <string name="event_price_format">%1$.2f RSD</string>
+    <string name="event_age_restriction_present">18+ Only</string>
+    <string name="event_age_restriction_absent">All ages</string>
+
 </resources>

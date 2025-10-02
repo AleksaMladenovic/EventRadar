@@ -2,6 +2,7 @@ package com.eventradar.data.repository
 
 import com.eventradar.data.model.Event
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -43,5 +44,23 @@ class EventRepository @Inject constructor(
         awaitClose {
             snapshotListener.remove()
         }
+    }
+
+    fun getEventById(eventId: String): Flow<Result<Event>> = callbackFlow {
+        val documentRef = firestore.collection("events").document(eventId)
+
+        val listener = documentRef.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                trySend(Result.failure(error))
+                return@addSnapshotListener
+            }
+            val event = snapshot?.toObject<Event>()
+            if (event != null) {
+                trySend(Result.success(event))
+            } else {
+                trySend(Result.failure(Exception("Event not found")))
+            }
+        }
+        awaitClose { listener.remove() }
     }
 }

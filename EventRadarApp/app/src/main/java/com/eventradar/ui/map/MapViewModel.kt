@@ -72,4 +72,7 @@ class MapViewModel @Inject constructor(
         _mapState.update { it.copy(isInAddEventMode = false) }
     }
 
+    fun onInitialCameraAnimationDone(){
+        _mapState.update { it.copy(isInitialCameraAnimationDone = true) }
+    }
 }

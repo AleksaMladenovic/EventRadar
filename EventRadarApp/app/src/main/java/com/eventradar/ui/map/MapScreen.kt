@@ -26,17 +26,19 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun MapScreen(
     mapViewModel: MapViewModel = hiltViewModel(),
-    onNavigateToAddEvent: (LatLng) -> Unit
+    onNavigateToAddEvent: (LatLng) -> Unit,
+    onNavigateToEventDetails: (String) -> Unit
 ) {
     // --- STANJA I LOGIKA ---
     val mapState by mapViewModel.mapState.collectAsStateWithLifecycle()
     var hasLocationPermission by remember { mutableStateOf(false) }
     val cameraPositionState = rememberCameraPositionState()
-    var isInitialCameraAnimationDone by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Launcher za traženje dozvola
@@ -74,17 +76,25 @@ fun MapScreen(
         }
     }
 
-    // Animacija kamere na početnu lokaciju (samo jednom)
-    LaunchedEffect(mapState.lastKnownLocation) {
-        if (mapState.lastKnownLocation != null && !isInitialCameraAnimationDone) {
-            val userLatLng = LatLng(mapState.lastKnownLocation!!.latitude, mapState.lastKnownLocation!!.longitude)
-            cameraPositionState.animate(
-                update = CameraUpdateFactory.newCameraPosition(CameraPosition(userLatLng, 15f, 0f, 0f)),
-                durationMs = 1000
-            )
-            isInitialCameraAnimationDone = true
+    LaunchedEffect(Unit) {
+        if(!mapState.isInitialCameraAnimationDone){
+            snapshotFlow { mapState.lastKnownLocation }
+                .filterNotNull()
+                .first()
+                .let { location ->
+                    val userLatLng = LatLng(location.latitude, location.longitude)
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newCameraPosition(
+                            CameraPosition(userLatLng, 15f, 0f, 0f)
+                        ),
+                        durationMs = 1000
+                    )
+                    mapViewModel.onInitialCameraAnimationDone()
+                }
+
         }
     }
+
 
     // --- UI DEO ---
     Box(modifier = Modifier.fillMaxSize()) {
@@ -101,7 +111,10 @@ fun MapScreen(
                     Marker(
                         state = MarkerState(position = LatLng(event.location.latitude, event.location.longitude)),
                         title = event.name,
-                        snippet = event.description
+                        snippet = event.description,
+                        onInfoWindowClick = {
+                            onNavigateToEventDetails(event.id)
+                        }
                     )
                 }
             }

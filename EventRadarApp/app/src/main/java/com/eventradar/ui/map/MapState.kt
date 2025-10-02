@@ -6,5 +6,6 @@ import com.eventradar.data.model.Event
 data class MapState(
     val lastKnownLocation: Location? = null,
     val events: List<Event> = emptyList(),
-    val isInAddEventMode: Boolean = false
+    val isInAddEventMode: Boolean = false,
+    val isInitialCameraAnimationDone: Boolean = false,
 )
