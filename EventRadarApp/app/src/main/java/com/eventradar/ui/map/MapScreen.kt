@@ -5,6 +5,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -29,6 +35,8 @@ import com.eventradar.R
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
 
 
 @Composable
@@ -98,29 +106,59 @@ fun MapScreen(
             println("MAP LIFECYCLE: Disposed, stopping updates")
         }
     }
-
-    if(hasLocationPermission){
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            properties = MapProperties(
-                isMyLocationEnabled = true,
-            ),
-            uiSettings = MapUiSettings(
-                zoomControlsEnabled = false,
-                myLocationButtonEnabled = true,
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { mapViewModel.onShowAddEventDialog() }) {
+                Icon(Icons.Default.Add, contentDescription = "Add Event")
+            }
+        }
+    ) { paddingValues ->
+        // Prikazujemo dijalog ako je 'isAddEventDialogShown' true
+        if (mapState.isAddEventDialogShown) {
+            AddEventDialog(
+                onDismiss = { mapViewModel.onDismissAddEventDialog() },
+                onConfirm = { name, description, category ->
+                    mapViewModel.addEvent(name, description, category)
+                },
+                errorMessage = mapState.addEventError
             )
-        ){
+        }
+        if(hasLocationPermission){
+            Box(
+                modifier = Modifier.padding(paddingValues)
+            ){
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    properties = MapProperties(
+                        isMyLocationEnabled = true,
+                    ),
+                    uiSettings = MapUiSettings(
+                        zoomControlsEnabled = false,
+                        myLocationButtonEnabled = true,
+                    )
+                ){
+                    mapState.events.forEach { event ->
+                        Marker(
+                            state = MarkerState(
+                                position = LatLng(event.location.latitude, event.location.longitude),
+                            ),
+                            title = event.name,
+                            snippet = event.description,
+                        )
+                    }
+                }
+            }
+
+        }else{
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ){
+                Text(text = stringResource(R.string.location_permission_required))
+            }
 
         }
-    }else{
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ){
-            Text(text = stringResource(R.string.location_permission_required))
-        }
-
     }
 
 }
