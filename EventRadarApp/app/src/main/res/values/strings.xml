@@ -56,18 +56,10 @@
     <string name="cd_add_event">Add Event</string>
 
     <!-- Add Event Dialog/Screen -->
-    <string name="add_event_title">Add New Event</string>
-    <string name="add_event_name_label">Event Name</string>
-    <string name="add_event_description_label">Description</string>
-    <string name="add_event_category_label">Category</string>
-    <string name="add_event_button">Add</string>
-    <string name="error_all_fields_required">All fields are required.</string>
-    <string name="error_user_or_location_not_available">User or location not available.</string>
-
-    <!-- Add Event Screen -->
     <string name="add_event_screen_title">Add New Event</string>
     <string name="event_name_label">Event Name</string>
     <string name="description_label">Description</string>
     <string name="category_label">Category</string>
     <string name="save_event_button">Save Event</string>
+    <string name="error_invalid_price">Please enter a valid price</string>
 </resources>
