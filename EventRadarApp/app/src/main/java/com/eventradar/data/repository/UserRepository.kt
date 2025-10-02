@@ -13,7 +13,7 @@ import javax.inject.Singleton
 class UserRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
-    private val storageRepository: StorageRepository
+    private val cloudinaryRepository: CloudinaryRepository
 ) {
     suspend fun getCurrentUser(): User? {
         val uid = auth.currentUser?.uid ?: return null
@@ -37,7 +37,7 @@ class UserRepository @Inject constructor(
 
             // Logika za upload slike sada živi ovde
             val profileImageUrl = if (profileImageUri != null) {
-                storageRepository.uploadProfileImage(profileImageUri).getOrNull()
+                cloudinaryRepository.uploadProfileImage(profileImageUri).getOrNull()
             } else {
                 null
             }

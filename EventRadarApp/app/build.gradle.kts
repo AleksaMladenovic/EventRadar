@@ -50,11 +50,19 @@ android {
         buildConfig = true
     }
     defaultConfig{
-        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY")?:""
+        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
+        val cloudinaryCloudName = localProperties.getProperty("CLOUDINARY_CLOUD_NAME") ?: ""
+        val cloudinaryApiKey = localProperties.getProperty("CLOUDINARY_API_KEY") ?: ""
+        val cloudinaryApiSecret = localProperties.getProperty("CLOUDINARY_API_SECRET") ?: ""
 
-        buildConfigField("String", "MAPS_API_KEY","\"$mapsApiKey\"")
-
+        // Maps API ključ
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
         resValue("string", "maps_api_key", mapsApiKey)
+
+        // --- DODAJ OVAJ DEO ZA CLOUDINARY ---
+        buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"$cloudinaryCloudName\"")
+        buildConfigField("String", "CLOUDINARY_API_KEY", "\"$cloudinaryApiKey\"")
+        buildConfigField("String", "CLOUDINARY_API_SECRET", "\"$cloudinaryApiSecret\"")
     }
 }
 
@@ -80,6 +88,7 @@ dependencies {
     implementation(libs.maps.compose)
     implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
+    implementation(libs.cloudinary.android)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     testImplementation(libs.junit)

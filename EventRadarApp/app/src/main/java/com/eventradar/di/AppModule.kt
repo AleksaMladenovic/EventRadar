@@ -1,8 +1,8 @@
 package com.eventradar.di
 
 import com.eventradar.data.repository.AuthRepository
+import com.eventradar.data.repository.CloudinaryRepository
 import com.eventradar.data.repository.EventRepository
-import com.eventradar.data.repository.StorageRepository
 import com.eventradar.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -31,11 +31,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideFirebaseStorage(): FirebaseStorage {
-        return FirebaseStorage.getInstance()
-    }
-    @Provides
-    @Singleton
     fun provideAuthRepository(
         firebaseAuth: FirebaseAuth
     ): AuthRepository {
@@ -52,7 +47,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideUserRepository(firestore: FirebaseFirestore, auth: FirebaseAuth, storageRepository: StorageRepository): UserRepository {
-        return UserRepository(firestore, auth, storageRepository)
+    fun provideUserRepository(firestore: FirebaseFirestore, auth: FirebaseAuth, cloudinaryRepository: CloudinaryRepository): UserRepository {
+        return UserRepository(firestore, auth, cloudinaryRepository)
     }
 }
