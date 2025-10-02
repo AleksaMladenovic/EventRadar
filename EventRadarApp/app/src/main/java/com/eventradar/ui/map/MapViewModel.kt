@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.eventradar.data.model.Event
 import com.eventradar.data.repository.EventRepository
 import com.eventradar.data.repository.LocationRepository
+import com.eventradar.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.GeoPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,6 +24,7 @@ class MapViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val eventRepository: EventRepository,
     private val auth: FirebaseAuth,
+    private val userRepository: UserRepository,
 ) : ViewModel() {
 
     private val _mapState = MutableStateFlow(MapState())
@@ -81,10 +83,9 @@ class MapViewModel @Inject constructor(
                 return@launch
             }
 
-            val currentUser = auth.currentUser
+            val currentUser = userRepository.getCurrentUser()
             val currentLocation = _mapState.value.lastKnownLocation
 
-            // Provera da li imamo sve potrebne podatke
             if (currentUser == null || currentLocation == null) {
                 _mapState.update { it.copy(addEventError = "User or location not available.") }
                 return@launch
@@ -96,7 +97,7 @@ class MapViewModel @Inject constructor(
                 category = category,
                 location = GeoPoint(currentLocation.latitude, currentLocation.longitude),
                 creatorId = currentUser.uid,
-                creatorName = currentUser.displayName ?: "Unknown User" // Uzimamo display name
+                creatorName = currentUser.username
             )
 
             eventRepository.addEvent(newEvent).onSuccess {

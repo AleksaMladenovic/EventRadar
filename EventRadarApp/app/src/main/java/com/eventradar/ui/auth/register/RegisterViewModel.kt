@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eventradar.R
 import com.eventradar.data.repository.AuthRepository
+import com.eventradar.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +24,8 @@ sealed class RegisterEvent {
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _formState = MutableStateFlow(RegistrationFormState())
@@ -53,36 +55,59 @@ class RegisterViewModel @Inject constructor(
 
     // NOVO: Funkcija za promenu slike
     fun onProfileImageChanged(uri: Uri?) {
+        println("VIEWMODEL: onProfileImageChanged called with URI: $uri")
         _formState.update { it.copy(profileImageUri = uri) }
     }
 
     fun register() {
         viewModelScope.launch {
-            if (validateForm()) {
-                _formState.update { it.copy(isLoading = true) }
+            if (!validateForm()) {
+                return@launch // Ako forma nije validna, prekini izvršavanje
+            }
 
-                val state = _formState.value
-                val result = authRepository.register(
-                    email = state.email,
-                    password = state.password,
-                    firstName = state.firstName,
-                    lastName = state.lastName,
-                    username = state.username,
-                    phone = state.phone,
-                    profileImageUri = state.profileImageUri
-                )
+            _formState.update { it.copy(isLoading = true) }
+            val state = _formState.value
 
-                _formState.update { it.copy(isLoading = false) }
+            // KORAK 1: Kreiraj nalog u Firebase Auth
+            // 'authRepository.register' JE SUSPEND FUNKCIJA, I POZIVAMO JE UNUTAR KORUTINE
+            val authResult = authRepository.register(state.email, state.password)
 
-                if (result.isSuccess) {
-                    _registerEvent.emit(RegisterEvent.RegisterSuccess)
+            // Obrada rezultata
+            authResult.onSuccess { result ->
+                val firebaseUser = result.user
+                if (firebaseUser != null) {
+                    // KORAK 2: Ako je Auth uspeo, kreiraj profil u Firestore
+                    // 'userRepository.createUserProfile' JE TAKOĐE SUSPEND FUNKCIJA
+                    val profileResult = userRepository.createUserProfile(
+                        firebaseUser = firebaseUser,
+                        firstName = state.firstName,
+                        lastName = state.lastName,
+                        username = state.username,
+                        phone = state.phone,
+                        profileImageUri = state.profileImageUri
+                    )
+
+                    _formState.update { it.copy(isLoading = false) }
+
+                    if (profileResult.isSuccess) {
+                        _registerEvent.emit(RegisterEvent.RegisterSuccess)
+                    } else {
+                        val error = profileResult.exceptionOrNull()?.message ?: "Error creating user profile."
+                        _registerEvent.emit(RegisterEvent.RegisterError(error))
+                    }
                 } else {
-                    val errorMessage = result.exceptionOrNull()?.message ?: "Unknown registration error"
-                    _registerEvent.emit(RegisterEvent.RegisterError(errorMessage))
+                    // Slučaj ako je Firebase vratio uspeh, ali je user objekat null (retko)
+                    _formState.update { it.copy(isLoading = false) }
+                    _registerEvent.emit(RegisterEvent.RegisterError("Failed to get user info after registration."))
                 }
+            }.onFailure { exception ->
+                // Greška pri kreiranju naloga u Firebase Auth
+                _formState.update { it.copy(isLoading = false) }
+                _registerEvent.emit(RegisterEvent.RegisterError(exception.message ?: "An unknown error occurred."))
             }
         }
     }
+
 
     private fun validateForm(): Boolean {
         val state = _formState.value

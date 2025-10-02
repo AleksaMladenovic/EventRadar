@@ -45,6 +45,7 @@ fun ProfileImagePicker(
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
+        println("IMAGE_PICKER: Gallery returned URI: $uri")
         onImageSelected(uri)
     }
 
@@ -68,6 +69,7 @@ fun ProfileImagePicker(
         contract = ActivityResultContracts.TakePicture()
     ) { success: Boolean ->
         if (success) {
+            println("IMAGE_PICKER: Camera returned success. URI should be: $tempUri")
             onImageSelected(tempUri)
         }
     }

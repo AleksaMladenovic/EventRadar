@@ -13,6 +13,7 @@ class StorageRepository @Inject constructor(
     private val storage: FirebaseStorage // Hilt će nam dati instancu FirebaseStorage-a
 ) {
     suspend fun uploadProfileImage(imageUri: Uri): Result<String> {
+        println("STORAGE_REPO: Starting image upload for URI: $imageUri")
         return try {
             // Kreiramo jedinstveno ime fajla, npr. "profile_images/neki-random-uuid.jpg"
             val fileName = "profile_images/${UUID.randomUUID()}"
@@ -23,9 +24,10 @@ class StorageRepository @Inject constructor(
 
             // Dobavljamo URL za download i čekamo da se završi
             val downloadUrl = storageRef.downloadUrl.await()
-
+            println("STORAGE_REPO: Upload successful. Download URL: $downloadUrl")
             Result.success(downloadUrl.toString())
         } catch (e: Exception) {
+            println("STORAGE_REPO: UPLOAD FAILED! Exception: ${e.message}")
             e.printStackTrace()
             Result.failure(e)
         }
