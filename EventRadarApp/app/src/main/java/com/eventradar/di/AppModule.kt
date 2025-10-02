@@ -1,6 +1,7 @@
 package com.eventradar.di
 
 import com.eventradar.data.repository.AuthRepository
+import com.eventradar.data.repository.EventRepository
 import com.eventradar.data.repository.StorageRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -40,5 +41,13 @@ object AppModule {
         storageRepository: StorageRepository
     ): AuthRepository {
         return AuthRepository(firebaseAuth, firestore, storageRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEventRepository(
+        firestore: FirebaseFirestore
+    ): EventRepository {
+        return EventRepository(firestore)
     }
 }

@@ -38,7 +38,6 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    // Ovu funkciju ćemo ignorisati za sada, ali neka stoji da ne pravi greške
     suspend fun register(
         email: String,
         password: String,
