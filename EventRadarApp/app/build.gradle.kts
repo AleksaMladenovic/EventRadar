@@ -59,7 +59,7 @@ android {
         buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
         resValue("string", "maps_api_key", mapsApiKey)
 
-        // --- DODAJ OVAJ DEO ZA CLOUDINARY ---
+        // Deo za Cloudinary
         buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"$cloudinaryCloudName\"")
         buildConfigField("String", "CLOUDINARY_API_KEY", "\"$cloudinaryApiKey\"")
         buildConfigField("String", "CLOUDINARY_API_SECRET", "\"$cloudinaryApiSecret\"")
@@ -90,6 +90,8 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.cloudinary.android)
     implementation(libs.androidx.ui)
+    implementation(libs.geofirestore.android)
+    implementation(libs.androidx.material3)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     testImplementation(libs.junit)

@@ -101,4 +101,11 @@
     <!-- Ranking Screen -->
     <string name="no_users_found_in_ranking">No users found in ranking.</string>
     <string name="points_format">%1$d pts</string>
+
+    <!-- Filters -->
+    <string name="filter_by_category">Filter by Category</string>
+    <string name="filter_by_radius">Filter by Radius</string>
+    <string name="any_distance">Any distance</string>
+    <string name="within_distance">Within %1$d km</string>
+    <string name="reset_filters">Reset Filters</string>
 </resources>

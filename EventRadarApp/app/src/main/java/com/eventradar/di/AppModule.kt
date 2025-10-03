@@ -3,14 +3,19 @@ package com.eventradar.di
 import com.eventradar.data.repository.AuthRepository
 import com.eventradar.data.repository.CloudinaryRepository
 import com.eventradar.data.repository.EventRepository
+import com.eventradar.data.repository.FilterRepository
+import com.eventradar.data.repository.LocationRepository
 import com.eventradar.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import org.imperiumlabs.geofirestore.GeoFirestore
+import javax.inject.Named
 import javax.inject.Singleton
 
 @Module
@@ -41,14 +46,31 @@ object AppModule {
     @Singleton
     fun provideEventRepository(
         firestore: FirebaseFirestore,
-        userRepository: UserRepository
+        userRepository: UserRepository,
+        geoFirestore: GeoFirestore,
+        filterRepository: FilterRepository,
+        locationRepository: LocationRepository
     ): EventRepository {
-        return EventRepository(firestore, userRepository)
+        return EventRepository(firestore, userRepository, geoFirestore, filterRepository, locationRepository)
     }
 
     @Provides
     @Singleton
     fun provideUserRepository(firestore: FirebaseFirestore, auth: FirebaseAuth, cloudinaryRepository: CloudinaryRepository): UserRepository {
         return UserRepository(firestore, auth, cloudinaryRepository)
+    }
+
+    @Provides
+    @Singleton
+    @Named("eventsCollection")
+    fun provideEventsCollection(firestore: FirebaseFirestore): CollectionReference {
+        return firestore.collection("events")
+    }
+
+
+    @Provides
+    @Singleton
+    fun provideGeoFirestore(@Named("eventsCollection") eventsCollection: CollectionReference): GeoFirestore {
+        return GeoFirestore(eventsCollection)
     }
 }

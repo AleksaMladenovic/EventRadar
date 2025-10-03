@@ -30,7 +30,7 @@ class MapViewModel @Inject constructor(
     private var locationJob : Job? = null;
 
     init {
-        fetchEvents()
+        fetchFilteredEvents()
     }
     fun startLocationUpdates() {
         if(locationJob?.isActive == true) return
@@ -51,18 +51,19 @@ class MapViewModel @Inject constructor(
         stopLocationUpdates()
     }
 
-    private fun fetchEvents(){
+    private fun fetchFilteredEvents() {
         viewModelScope.launch {
-            eventRepository.getAllEvents().collect { result ->
+            // Slušamo promene iz getFilteredEvents
+            eventRepository.getFilteredEvents().collect { result ->
                 result.onSuccess { events ->
                     _mapState.update { it.copy(events = events) }
                 }.onFailure {
                     println("Error fetching events: ${it.message}")
                 }
-
             }
         }
     }
+
 
     fun onEnterAddEventMode() {
         _mapState.update { it.copy(isInAddEventMode = true) }

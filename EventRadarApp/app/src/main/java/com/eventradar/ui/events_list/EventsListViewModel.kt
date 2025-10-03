@@ -21,11 +21,11 @@ class EventsListViewModel @Inject constructor(
     val state: StateFlow<EventsListState> = _state.asStateFlow()
 
     init {
-        getEvents()
+        getFilteredEvents()
     }
 
-    private fun getEvents() {
-        eventRepository.getAllEvents()
+    private fun getFilteredEvents() {
+        eventRepository.getFilteredEvents()
             .onEach { result ->
                 result.onSuccess { events ->
                     _state.update { it.copy(events = events, isLoading = false, error = null) }
@@ -35,4 +35,5 @@ class EventsListViewModel @Inject constructor(
             }
             .launchIn(viewModelScope)
     }
+
 }

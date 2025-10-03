@@ -135,7 +135,7 @@ class AddEventViewModel @Inject constructor(
         val dateError = if (state.eventDate == null) R.string.error_field_required else null
         val timeError = if (state.eventTime.isBlank()) R.string.error_field_required else null
         val priceError = if (!state.isFree && (state.price.isBlank() || state.price.toDoubleOrNull() == null)) {
-            R.string.error_invalid_price // Dodaj ovaj string u strings.xml
+            R.string.error_invalid_price
         } else null
 
         _formState.update {
