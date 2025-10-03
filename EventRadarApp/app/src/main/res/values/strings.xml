@@ -88,4 +88,9 @@
     <string name="category_food">Food &amp; Drink</string>
     <string name="category_education">Education</string>
     <string name="category_other">Other</string>
+
+    <!-- Profile Screen -->
+    <string name="profile_points">Points</string>
+    <string name="profile_sign_out">Sign Out</string>
+    <string name="profile_loading_error">Failed to load user profile.</string>
 </resources>
