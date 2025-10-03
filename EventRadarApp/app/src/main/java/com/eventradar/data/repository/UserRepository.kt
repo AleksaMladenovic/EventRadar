@@ -4,7 +4,13 @@ import android.net.Uri
 import com.eventradar.data.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.toObjects
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -60,4 +66,32 @@ class UserRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    fun getAllUsersSortedByPoints(): Flow<Result<List<User>>> = callbackFlow {
+        val listener = firestore.collection("users")
+            .orderBy("points", Query.Direction.DESCENDING) // Sortiraj po poenima opadajuće
+            .limit(100) // Opciono: Ograniči na top 100 korisnika
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(Result.failure(error))
+                    return@addSnapshotListener
+                }
+                if (snapshot != null) {
+                    val users = snapshot.toObjects<User>()
+                    trySend(Result.success(users))
+                }
+            }
+        awaitClose { listener.remove() }
+    }
+
+    suspend fun incrementUserPoints(userId: String, pointsToAdd: Long): Result<Unit> {
+        return try {
+            val userRef = firestore.collection("users").document(userId)
+            userRef.update("points", FieldValue.increment(pointsToAdd)).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 }

@@ -13,7 +13,8 @@ import javax.inject.Singleton
 
 @Singleton
 class EventRepository @Inject constructor(
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val userRepository: UserRepository
 ) {
     suspend fun addEvent(event: Event): Result<Unit> {
         return try {
@@ -21,6 +22,8 @@ class EventRepository @Inject constructor(
 
             firestore.collection("events").document(documentRef.id)
                 .set(event.copy(id = documentRef.id)).await()
+
+            userRepository.incrementUserPoints(event.creatorId, 10L)
 
             Result.success(Unit)
         } catch (e: Exception) {
