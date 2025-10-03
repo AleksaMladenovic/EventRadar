@@ -81,4 +81,11 @@
     <string name="event_age_restriction_present">18+ Only</string>
     <string name="event_age_restriction_absent">All ages</string>
 
+    <!-- Event Categories -->
+    <string name="category_music">Music</string>
+    <string name="category_sport">Sport</string>
+    <string name="category_culture">Culture</string>
+    <string name="category_food">Food &amp; Drink</string>
+    <string name="category_education">Education</string>
+    <string name="category_other">Other</string>
 </resources>

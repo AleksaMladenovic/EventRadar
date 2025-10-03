@@ -259,7 +259,7 @@ fun CategoryDropdown(
         onExpandedChange = { expanded = !expanded }
     ) {
         OutlinedTextField(
-            value = selectedCategory.name,
+            value = stringResource(id = selectedCategory.displayNameResId),
             onValueChange = {},
             readOnly = true,
             label = { Text(stringResource(id = R.string.category_label)) },
@@ -272,7 +272,7 @@ fun CategoryDropdown(
         ) {
             categories.forEach { category ->
                 DropdownMenuItem(
-                    text = { Text(category.name) },
+                    text = { Text(stringResource(id = category.displayNameResId)) },
                     onClick = {
                         onCategorySelected(category)
                         expanded = false

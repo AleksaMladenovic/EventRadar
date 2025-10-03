@@ -14,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -22,7 +23,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eventradar.R
+import com.eventradar.data.model.EventCategory
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
@@ -108,13 +111,19 @@ fun MapScreen(
             ) {
                 // Prikaz postojećih markera za događaje
                 mapState.events.forEach { event ->
+                    val category = EventCategory.fromString(event.category)
+
                     Marker(
                         state = MarkerState(position = LatLng(event.location.latitude, event.location.longitude)),
                         title = event.name,
                         snippet = event.description,
                         onInfoWindowClick = {
                             onNavigateToEventDetails(event.id)
-                        }
+                        },
+                        icon = BitmapDescriptorFactory.defaultMarker(
+                            category.markerHue
+                        )
+
                     )
                 }
             }
