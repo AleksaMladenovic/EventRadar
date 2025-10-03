@@ -32,6 +32,7 @@ import com.google.maps.android.compose.*
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 
+
 @Composable
 fun MapScreen(
     mapViewModel: MapViewModel = hiltViewModel(),
@@ -40,15 +41,18 @@ fun MapScreen(
 ) {
     // --- STANJA I LOGIKA ---
     val mapState by mapViewModel.mapState.collectAsStateWithLifecycle()
-    var hasLocationPermission by remember { mutableStateOf(false) }
+    var permissionState by remember { mutableStateOf(LocationPermissionState.LOADING) }
     val cameraPositionState = rememberCameraPositionState()
-    val lifecycleOwner = LocalLifecycleOwner.current
 
     // Launcher za traženje dozvola
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
         onResult = { permissions ->
-            hasLocationPermission = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+            if(permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true){
+                permissionState = LocationPermissionState.GRANTED
+            }else {
+                permissionState = LocationPermissionState.DENIED
+            }
         }
     )
 
@@ -62,10 +66,11 @@ fun MapScreen(
         )
     }
 
+    val lifecycleOwner = LocalLifecycleOwner.current
     // Upravljanje start/stop praćenjem lokacije
-    DisposableEffect(lifecycleOwner, hasLocationPermission) {
+    DisposableEffect(lifecycleOwner, permissionState) {
         val observer = LifecycleEventObserver { _, event ->
-            if (hasLocationPermission) {
+            if (permissionState == LocationPermissionState.GRANTED) {
                 when (event) {
                     Lifecycle.Event.ON_START -> mapViewModel.startLocationUpdates()
                     Lifecycle.Event.ON_STOP -> mapViewModel.stopLocationUpdates()
@@ -101,90 +106,96 @@ fun MapScreen(
 
     // --- UI DEO ---
     Box(modifier = Modifier.fillMaxSize()) {
-        if (hasLocationPermission) {
-            // Glavna mapa
-            GoogleMap(
-                modifier = Modifier.fillMaxSize(),
-                cameraPositionState = cameraPositionState,
-                properties = MapProperties(isMyLocationEnabled = true),
-                uiSettings = MapUiSettings(myLocationButtonEnabled = true, zoomControlsEnabled = false)
-            ) {
-                // Prikaz postojećih markera za događaje
-                mapState.events.forEach { event ->
-                    val category = EventCategory.fromString(event.category)
-
-                    Marker(
-                        state = MarkerState(position = LatLng(event.location.latitude, event.location.longitude)),
-                        title = event.name,
-                        snippet = event.description,
-                        onInfoWindowClick = {
-                            onNavigateToEventDetails(event.id)
-                        },
-                        icon = BitmapDescriptorFactory.defaultMarker(
-                            category.markerHue
-                        )
-
-                    )
-                }
+        when(permissionState){
+            LocationPermissionState.LOADING -> {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
 
-            // Prikazuje se samo ako smo u modu za dodavanje
-            if (mapState.isInAddEventMode) {
-                // Centralni marker koji se ne pomera
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = stringResource(R.string.cd_center_marker),
-                    modifier = Modifier.align(Alignment.Center).size(40.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-
-                // Kontrole na dnu za potvrdu ili otkazivanje
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround
+            LocationPermissionState.DENIED -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Button(
-                        onClick = { mapViewModel.onExitAddEventMode() },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
-                    ) {
-                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel_button))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.cancel_button))
-                    }
-                    Button(onClick = {
-                        val centerOfMap = cameraPositionState.position.target
-                        onNavigateToAddEvent(centerOfMap)
-                        // Odmah izađi iz moda dodavanja nakon potvrde
-                        mapViewModel.onExitAddEventMode()
-                    }) {
-                        Icon(Icons.Default.Check, contentDescription = stringResource(R.string.confirm_button))
-                        Spacer(Modifier.width(8.dp))
-                        Text(stringResource(R.string.confirm_button))
-                    }
+                    Text(text = stringResource(R.string.location_permission_required))
                 }
             }
 
-            // Glavni FAB '+' se prikazuje samo ako NISMO u modu za dodavanje
-            AnimatedVisibility(
-                visible = !mapState.isInAddEventMode,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(16.dp)
-            ) {
-                FloatingActionButton(onClick = { mapViewModel.onEnterAddEventMode() }) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_event))
+            LocationPermissionState.GRANTED -> {
+                GoogleMap(
+                    modifier = Modifier.fillMaxSize(),
+                    cameraPositionState = cameraPositionState,
+                    properties = MapProperties(isMyLocationEnabled = true),
+                    uiSettings = MapUiSettings(myLocationButtonEnabled = true, zoomControlsEnabled = false)
+                ) {
+                    // Prikaz postojećih markera za događaje
+                    mapState.events.forEach { event ->
+                        val category = EventCategory.fromString(event.category)
+
+                        Marker(
+                            state = MarkerState(position = LatLng(event.location.latitude, event.location.longitude)),
+                            title = event.name,
+                            snippet = event.description,
+                            onInfoWindowClick = {
+                                onNavigateToEventDetails(event.id)
+                            },
+                            icon = BitmapDescriptorFactory.defaultMarker(
+                                category.markerHue
+                            )
+
+                        )
+                    }
                 }
-            }
-        } else {
-            // Prikaz ako nema dozvole
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = stringResource(R.string.location_permission_required))
+
+                // Prikazuje se samo ako smo u modu za dodavanje
+                if (mapState.isInAddEventMode) {
+                    // Centralni marker koji se ne pomera
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = stringResource(R.string.cd_center_marker),
+                        modifier = Modifier.align(Alignment.Center).size(40.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+
+                    // Kontrole na dnu za potvrdu ili otkazivanje
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(16.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        Button(
+                            onClick = { mapViewModel.onExitAddEventMode() },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel_button))
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.cancel_button))
+                        }
+                        Button(onClick = {
+                            val centerOfMap = cameraPositionState.position.target
+                            onNavigateToAddEvent(centerOfMap)
+                            // Odmah izađi iz moda dodavanja nakon potvrde
+                            mapViewModel.onExitAddEventMode()
+                        }) {
+                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.confirm_button))
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.confirm_button))
+                        }
+                    }
+                }
+
+                // Glavni FAB '+' se prikazuje samo ako NISMO u modu za dodavanje
+                AnimatedVisibility(
+                    visible = !mapState.isInAddEventMode,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                ) {
+                    FloatingActionButton(onClick = { mapViewModel.onEnterAddEventMode() }) {
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_add_event))
+                    }
+                }
             }
         }
     }
