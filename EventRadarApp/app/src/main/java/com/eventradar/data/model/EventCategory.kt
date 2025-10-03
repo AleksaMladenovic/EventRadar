@@ -19,7 +19,7 @@ private fun hueFromColor(color: Color): Float {
 
 enum class EventCategory(
     @StringRes val displayNameResId: Int,
-    private val color: Color,
+    val color: Color,
     val markerHue: Float
 ) {
     MUSIC(R.string.category_music, Color.Blue, hueFromColor(Color.Blue)),

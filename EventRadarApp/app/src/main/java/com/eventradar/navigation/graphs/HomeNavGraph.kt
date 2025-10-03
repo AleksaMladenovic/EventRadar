@@ -31,7 +31,10 @@ fun HomeNavGraph(navController: NavHostController, rootNavController: NavControl
             )
         }
         composable(Routes.EVENTS_LIST_SCREEN) {
-            EventsListScreen()
+            EventsListScreen(
+                onNavigateToEventDetails = { eventId ->
+                    rootNavController.navigate("event_details/$eventId")
+                })
         }
         composable(Routes.RANKING_SCREEN) {
             RankingScreen()
