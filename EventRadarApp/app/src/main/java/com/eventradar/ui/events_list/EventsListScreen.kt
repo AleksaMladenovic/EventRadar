@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,7 +42,7 @@ fun EventsListScreen(
             state.events.isEmpty() -> {
                 // Prikazujemo poruku ako nema događaja
                 Text(
-                    text = "No events found.", // Dodaj ovaj string u strings.xml
+                    text = stringResource(id = R.string.no_events_found),
                     modifier = Modifier.align(Alignment.Center)
                 )
             }

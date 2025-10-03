@@ -68,7 +68,11 @@ private fun ProfileContent(user: User, onSignOut: () -> Unit) {
         // Slika profila
         AsyncImage(
             model = user.profileImageUrl,
-            contentDescription = "Profile picture of ${user.username}",
+            contentDescription = stringResource(
+                id = R.string.profile_picture_description,
+                user.username
+            ),
+
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape),

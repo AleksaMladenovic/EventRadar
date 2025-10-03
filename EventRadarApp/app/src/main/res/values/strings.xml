@@ -35,10 +35,13 @@
     <string name="image_picker_description">Where would you like to add a profile picture from?</string>
     <string name="image_picker_camera">Camera</string>
     <string name="image_picker_gallery">Gallery</string>
+    <string name="camera_permission_denied">Camera permission denied</string>
 
     <!-- Content Descriptions for Accessibility -->
     <string name="cd_profile_image">Profile picture</string>
     <string name="cd_add_profile_image">Add profile picture</string>
+    <string name="app_logo_description">App Logo</string>
+    <string name="profile_picture_description">Profile picture of %1$s</string>
 
     <!-- Bottom Navigation -->
     <string name="bottom_nav_map">Map</string>
@@ -71,6 +74,7 @@
     <string name="dialog_cancel">Cancel</string>
     <string name="toast_event_added_success">Event added successfully!</string>
     <string name="error_invalid_price">Please enter a valid price</string>
+    <string name="no_events_found">No events found.</string>
 
     <!-- Event Details Screen -->
     <string name="event_details_loading">Loading event details...</string>
@@ -93,4 +97,8 @@
     <string name="profile_points">Points</string>
     <string name="profile_sign_out">Sign Out</string>
     <string name="profile_loading_error">Failed to load user profile.</string>
+
+    <!-- Ranking Screen -->
+    <string name="no_users_found_in_ranking">No users found in ranking.</string>
+    <string name="points_format">%1$d pts</string>
 </resources>

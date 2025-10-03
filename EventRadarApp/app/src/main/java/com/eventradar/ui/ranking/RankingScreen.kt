@@ -11,9 +11,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.eventradar.R
 
 @Composable
 fun RankingScreen(
@@ -35,7 +37,7 @@ fun RankingScreen(
             }
             state.users.isEmpty() -> {
                 Text(
-                    text = "No users found in ranking.", // Dodaj u strings.xml
+                    text = stringResource(id = R.string.no_users_found_in_ranking), // Dodaj u strings.xml
                     modifier = Modifier.align(Alignment.Center)
                 )
             }

@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,7 +44,7 @@ fun RankingListItem(
             // Slika profila
             AsyncImage(
                 model = user.profileImageUrl,
-                contentDescription = "Profile picture of ${user.username}",
+                contentDescription = stringResource(id = R.string.profile_picture_description, user.username),
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape),
@@ -72,7 +73,7 @@ fun RankingListItem(
 
             // Poeni
             Text(
-                text = "${user.points} pts",
+                text = stringResource(id = R.string.points_format, user.points),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary

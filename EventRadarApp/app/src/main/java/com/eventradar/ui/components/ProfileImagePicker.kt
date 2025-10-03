@@ -83,7 +83,7 @@ fun ProfileImagePicker(
             cameraLauncher.launch(tempUri)
         } else {
             // Opciono: Pokaži poruku korisniku da je dozvola odbijena
-             Toast.makeText(context, "Camera permission denied", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.camera_permission_denied), Toast.LENGTH_SHORT).show()
         }
     }
 

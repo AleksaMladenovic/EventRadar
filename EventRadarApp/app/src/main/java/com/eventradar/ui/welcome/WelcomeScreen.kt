@@ -33,7 +33,7 @@ fun WelcomeScreen(
 
         Image(
             painter = painterResource(id = R.drawable.app_logo),
-            contentDescription = "App Logo", // Opis za accessibility
+            contentDescription = stringResource(id = R.string.app_logo_description),
             modifier = Modifier
                 .size(150.dp)
                 .clip(RoundedCornerShape(10.dp))
