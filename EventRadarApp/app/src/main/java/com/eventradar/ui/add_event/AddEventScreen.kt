@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -79,7 +80,6 @@ fun AddEventScreen(
                 formState.nameError?.let { Text(stringResource(id = it)) }
             }
         )
-        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = formState.description,
@@ -89,14 +89,15 @@ fun AddEventScreen(
             isError = formState.descriptionError != null,
             supportingText = {
                 formState.descriptionError?.let { Text(stringResource(id = it)) }
-            }
+            },
+            singleLine = false,
         )
-        Spacer(modifier = Modifier.height(16.dp))
 
         CategoryDropdown(
             selectedCategory = formState.category,
             onCategorySelected = { addEventViewModel.onCategoryChange(it) }
         )
+
         Spacer(modifier = Modifier.height(16.dp))
 
         val dateFormatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
@@ -113,7 +114,6 @@ fun AddEventScreen(
                 formState.dateError?.let { Text(stringResource(id = it)) }
             }
         )
-        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = formState.eventTime,
@@ -128,7 +128,6 @@ fun AddEventScreen(
                 formState.timeError?.let { Text(stringResource(id = it)) }
             }
         )
-        Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -141,7 +140,6 @@ fun AddEventScreen(
                 onCheckedChange = { addEventViewModel.onAgeRestrictionChanged(it) }
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -157,7 +155,7 @@ fun AddEventScreen(
 
         AnimatedVisibility(visible = !formState.isFree) {
             Column {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 OutlinedTextField(
                     value = formState.price,
                     onValueChange = { addEventViewModel.onPriceChanged(it) },
@@ -171,7 +169,6 @@ fun AddEventScreen(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(32.dp))
 
         Button(
             onClick = { addEventViewModel.onSaveEvent() },
@@ -282,3 +279,5 @@ fun CategoryDropdown(
         }
     }
 }
+
+
