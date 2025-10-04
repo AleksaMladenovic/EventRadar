@@ -21,6 +21,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.eventradar.R
 import com.eventradar.data.model.Event
+import com.eventradar.data.model.EventCategory
+import com.eventradar.ui.components.CategoryChip
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -64,29 +66,15 @@ fun EventDetailsContent(event: Event) {
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        // Slika događaja (ako postoji)
-        event.eventImageUrl?.let { imageUrl ->
-            AsyncImage(
-                model = imageUrl,
-                contentDescription = event.name,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(250.dp),
-                contentScale = ContentScale.Crop
-            )
-        }
 
         // Glavni sadržaj
         Column(modifier = Modifier.padding(16.dp)) {
             // Naslov i kategorija
+            Spacer(modifier = Modifier.height(8.dp))
             Text(text = event.name, style = MaterialTheme.typography.headlineLarge)
-            Text(
-                text = event.category,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
+            Spacer(modifier = Modifier.height(8.dp))
+            CategoryChip(category = EventCategory.fromString(event.category))
+            Spacer(modifier = Modifier.height(8.dp))
             // Detalji sa ikonicama
             DetailRow(icon = Icons.Default.Event, text = event.eventTimestamp?.toDate()?.let { dateFormatter.format(it) } ?: "N/A")
             DetailRow(icon = Icons.Default.LocationOn, text = "Location (Lat: ${event.location.latitude}, Lng: ${event.location.longitude})")
