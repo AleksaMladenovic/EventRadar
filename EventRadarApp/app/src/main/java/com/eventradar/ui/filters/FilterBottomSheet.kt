@@ -33,13 +33,15 @@ fun FilterBottomSheet(
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(categories) { category ->
                 FilterChip(
-                    selected = filters.category == category,
+                    selected = category in filters.categories,
                     onClick = {
-                        // Ako je ista kategorija kliknuta ponovo, deselektuj je
-                        val newCategory = if (filters.category == category) null else category
-                        viewModel.onCategorySelected(newCategory)
+                        viewModel.onCategoryToggled(category)
                     },
-                    label = { Text(stringResource(id = category.displayNameResId)) }
+                    label = { Text(stringResource(id = category.displayNameResId)) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = category.color.copy(alpha = 0.2f),
+                        selectedLabelColor = category.color
+                    )
                 )
             }
         }

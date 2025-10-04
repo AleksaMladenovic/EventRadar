@@ -20,8 +20,8 @@ class FilterViewModel @Inject constructor(
     val filters: StateFlow<EventFilters> = filterRepository.filters
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), filterRepository.filters.value)
 
-    fun onCategorySelected(category: EventCategory?) {
-        filterRepository.updateCategory(category)
+    fun onCategoryToggled(category: EventCategory) {
+        filterRepository.toggleCategory(category)
     }
 
     fun onRadiusChange(radius: Float) {

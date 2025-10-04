@@ -2,6 +2,7 @@ package com.eventradar.data.repository
 
 import android.location.Location
 import com.eventradar.data.model.Event
+import com.eventradar.data.model.EventCategory
 import com.eventradar.data.model.EventFilters
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
@@ -102,17 +103,13 @@ class EventRepository @Inject constructor(
             filterRepository.filters,
             significantLocationUpdates,
         ) { filters, location ->
-            println("FILTER_DEBUG: COMBINE triggered. Filters: radius=${filters.radiusInKm}km, category=${filters.category}. Location: ${location?.latitude}")
             Pair(filters, location)
         }.flatMapLatest { (filters, location) ->
             // Ako je filter za radijus aktivan i imamo lokaciju, radi geo-upit
             if (filters.radiusInKm != null && location != null) {
-                println("FILTER_DEBUG: ---> Entering GEO QUERY mode. Center: ${location.latitude}, Radius: ${filters.radiusInKm}km")
                 createGeoQueryFlow(filters, location)
             } else {
                 // U suprotnom, radi običan upit (samo sa filterom za kategoriju)
-                println("FILTER_DEBUG: ---> Entering NORMAL QUERY mode.")
-
                 createNormalQueryFlow(filters)
             }
         }
@@ -122,9 +119,8 @@ class EventRepository @Inject constructor(
     private fun createNormalQueryFlow(filters: EventFilters): Flow<Result<List<Event>>> = callbackFlow {
         var query: Query = firestore.collection("events")
 
-        // Dodaj filter po kategoriji ako je izabrana
-        filters.category?.let {
-            query = query.whereEqualTo("category", it.name)
+        if(filters.categories.isNotEmpty()){
+            query = query.whereIn("category", filters.categories.map { it.name })
         }
 
         val listener = query.addSnapshotListener { snapshot, error ->
@@ -158,12 +154,12 @@ class EventRepository @Inject constructor(
                 firestore.collection("events").document(documentID).get()
                     .addOnSuccessListener { document ->
                         document.toObject<Event>()?.let { event ->
-                            // Dodatno proveravamo da li se poklapa i sa filterom za kategoriju
-                            if (filters.category == null || event.category == filters.category.name) {
+                            val categoryFilter = filters.categories
+                            if (categoryFilter.isEmpty() || EventCategory.fromString(event.category) in categoryFilter) {
                                 eventsInRadius[documentID] = event
-                                // Emituj ažuriranu listu
                                 trySend(Result.success(eventsInRadius.values.toList()))
                             }
+
                         }
                     }
             }

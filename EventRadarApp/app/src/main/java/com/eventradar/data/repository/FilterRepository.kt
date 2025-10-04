@@ -14,8 +14,16 @@ class FilterRepository @Inject constructor() {
     private val _filters = MutableStateFlow(EventFilters())
     val filters: StateFlow<EventFilters> = _filters.asStateFlow()
 
-    fun updateCategory(category: EventCategory?) {
-        _filters.update { it.copy(category = category) }
+    fun toggleCategory(category: EventCategory) {
+        _filters.update { currentFilters ->
+            val currentCategories = currentFilters.categories.toMutableSet()
+            if(category in currentCategories){
+                currentCategories.remove(category)
+            }else{
+                currentCategories.add(category)
+            }
+            currentFilters.copy(categories = currentCategories)
+        }
     }
 
     fun updateRadius(radius: Double?) {

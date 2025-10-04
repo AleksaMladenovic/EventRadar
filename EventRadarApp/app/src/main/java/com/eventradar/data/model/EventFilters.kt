@@ -1,6 +1,6 @@
 package com.eventradar.data.model
 
 data class EventFilters(
-    val category: EventCategory? = null,
+    val categories: Set<EventCategory> = emptySet(),
     val radiusInKm: Double? = null
 )
