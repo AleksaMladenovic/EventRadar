@@ -6,9 +6,13 @@ import com.eventradar.data.model.EventCategory
 import com.eventradar.data.model.EventFilters
 import com.eventradar.data.repository.FilterRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -16,24 +20,40 @@ class FilterViewModel @Inject constructor(
     private val filterRepository: FilterRepository
 ) : ViewModel() {
 
-    // Direktno "preslikavamo" stanje filtera iz repozitorijuma
-    val filters: StateFlow<EventFilters> = filterRepository.filters
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), filterRepository.filters.value)
+    private val _temporaryFilters = MutableStateFlow(filterRepository.filters.value)
+    // Javno stanje koje UI (BottomSheet) posmatra
+    val temporaryFilters: StateFlow<EventFilters> = _temporaryFilters.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            filterRepository.filters.collect { appliedFilters ->
+                _temporaryFilters.value = appliedFilters
+            }
+        }
+    }
     fun onCategoryToggled(category: EventCategory) {
-        filterRepository.toggleCategory(category)
+        _temporaryFilters.update { currentFilters ->
+            val currentCategories = currentFilters.categories.toMutableSet()
+            if (category in currentCategories) currentCategories.remove(category)
+            else currentCategories.add(category)
+            currentFilters.copy(categories = currentCategories)
+        }
     }
 
     fun onRadiusChange(radius: Float) {
-        // Ako je slider na maksimumu, smatramo da nema limita (null)
         val radiusInKm = if (radius == MAX_RADIUS) null else radius.toDouble()
-        println("FILTER_DEBUG: onRadiusChange called. New radius (km): $radiusInKm")
-        filterRepository.updateRadius(radiusInKm)
+        _temporaryFilters.update { it.copy(radiusInKm = radiusInKm) }
     }
 
-    fun onResetFilters() {
-        filterRepository.resetFilters()
+    fun applyFilters() {
+        filterRepository.applyFilters(_temporaryFilters.value)
     }
+
+    fun resetFilters() {
+        // Reset sada postavlja privremene filtere na podrazumevane vrednosti
+        _temporaryFilters.value = EventFilters()
+    }
+
 
     companion object {
         const val MAX_RADIUS = 101f // Jedna vrednost više od maksimuma slidera za "bez limita"

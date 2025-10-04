@@ -68,7 +68,9 @@ fun MainScreen(rootNavController: NavController) {
             sheetState = sheetState,
             onDismissRequest = { isSheetOpen = false }
         ) {
-            FilterBottomSheet()
+            FilterBottomSheet(onApplyFilters = {
+                isSheetOpen = false
+            })
         }
     }
 }

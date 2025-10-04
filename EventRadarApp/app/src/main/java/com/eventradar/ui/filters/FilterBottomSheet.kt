@@ -16,9 +16,10 @@ import com.eventradar.data.model.EventCategory
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterBottomSheet(
-    viewModel: FilterViewModel = hiltViewModel()
+    viewModel: FilterViewModel = hiltViewModel(),
+    onApplyFilters: () -> Unit
 ) {
-    val filters by viewModel.filters.collectAsStateWithLifecycle()
+    val filters by viewModel.temporaryFilters.collectAsStateWithLifecycle()
     val categories = EventCategory.values()
 
     Column(
@@ -67,12 +68,27 @@ fun FilterBottomSheet(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Dugme za resetovanje
-        OutlinedButton(
-            onClick = { viewModel.onResetFilters() },
-            modifier = Modifier.fillMaxWidth()
+        // Dugmici za resetovanje i apply
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Reset Filters")
+            OutlinedButton(
+                onClick = { viewModel.resetFilters() },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Reset")
+            }
+            Button(
+                onClick = {
+                    viewModel.applyFilters() // PRIMENI FILTERE
+                    onApplyFilters()       // ZATVORI BOTTOM SHEET
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Apply Filters")
+            }
         }
+
     }
 }
