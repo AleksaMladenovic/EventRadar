@@ -87,6 +87,8 @@
     <string name="event_price_format">%1$.2f RSD</string>
     <string name="event_age_restriction_present">18+ Only</string>
     <string name="event_age_restriction_absent">All ages</string>
+    <string name="show_on_map">Show on Map</string>
+    <string name="event_about_label">About this event</string>
 
     <!-- Event Categories -->
     <string name="category_music">Music</string>

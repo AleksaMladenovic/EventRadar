@@ -1,6 +1,7 @@
 package com.eventradar.ui.map
 
 import android.Manifest
+import android.os.Bundle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -35,6 +36,7 @@ import kotlinx.coroutines.flow.first
 
 @Composable
 fun MapScreen(
+    arguments: Bundle?,
     mapViewModel: MapViewModel = hiltViewModel(),
     onNavigateToAddEvent: (LatLng) -> Unit,
     onNavigateToEventDetails: (String) -> Unit
@@ -55,6 +57,26 @@ fun MapScreen(
             }
         }
     )
+
+    LaunchedEffect(arguments) {
+        if(arguments!=null){
+            val lat = arguments?.getString("lat")?.toDoubleOrNull()
+            val lng = arguments?.getString("lng")?.toDoubleOrNull()
+
+            if (lat != null && lng != null) {
+                val position = LatLng(lat, lng)
+                cameraPositionState.animate(
+                    update = CameraUpdateFactory.newLatLngZoom(position, 17f),
+                    durationMs = 1500
+                )
+                // Očisti argumente da se ne bi ponovo pokrenulo
+                arguments.remove("lat")
+                arguments.remove("lng")
+            }
+        }
+
+    }
+
 
     // Jednokratno traženje dozvola pri pokretanju ekrana
     LaunchedEffect(Unit) {

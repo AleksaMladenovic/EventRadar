@@ -23,29 +23,6 @@ fun NavGraphBuilder.mainNavGraph(navController: NavController) {
         composable("main_flow") {
             MainScreen(rootNavController = navController)
         }
-        composable(
-            route = Routes.ADD_EVENT_SCREEN,
-            arguments = listOf(
-                navArgument("lat") { type = NavType.StringType },
-                navArgument("lng") { type = NavType.StringType }
-            )
-        ) {
-            AddEventScreen(
-                onEventAdded = {
-                    navController.popBackStack()
-                }
-            )
-        }
-        composable(
-            route = Routes.EVENT_DETAILS_SCREEN,
-            arguments = listOf(
-                navArgument("eventId") {
-                    type = NavType.StringType
-                }
-            )
-        ) {
-            EventDetailsScreen()
-        }
 
     }
 }
