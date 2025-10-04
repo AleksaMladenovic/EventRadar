@@ -42,6 +42,9 @@
     <string name="cd_add_profile_image">Add profile picture</string>
     <string name="app_logo_description">App Logo</string>
     <string name="profile_picture_description">Profile picture of %1$s</string>
+    <string name="search_icon_description">Search icon</string>
+    <string name="clear_search_icon_description">Clear search</string>
+    <string name="filter_icon_description">Filter Events</string>
 
     <!-- Bottom Navigation -->
     <string name="bottom_nav_map">Map</string>
@@ -108,4 +111,5 @@
     <string name="any_distance">Any distance</string>
     <string name="within_distance">Within %1$d km</string>
     <string name="reset_filters">Reset Filters</string>
+    <string name="search_placeholder">Search by event name...</string>
 </resources>

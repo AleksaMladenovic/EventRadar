@@ -18,13 +18,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.eventradar.navigation.graphs.HomeNavGraph
 import com.eventradar.ui.components.BottomBar
 import com.eventradar.ui.filters.FilterBottomSheet
 import com.eventradar.ui.navigation.BottomNavItem
-
+import com.eventradar.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,12 +38,12 @@ fun MainScreen(rootNavController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("EventRadar") },
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     IconButton(onClick = { isSheetOpen = true }) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filter Events")
+                        Icon(Icons.Default.FilterList, contentDescription = stringResource(R.string.filter_icon_description))
                     }
-                }
+                },
             )
         },
         bottomBar = {
