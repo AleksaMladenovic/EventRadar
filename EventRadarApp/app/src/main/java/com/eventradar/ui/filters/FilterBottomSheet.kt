@@ -55,7 +55,7 @@ fun FilterBottomSheet(
             value = radiusValue,
             onValueChange = { viewModel.onRadiusChange(it) },
             valueRange = 1f..FilterViewModel.MAX_RADIUS,
-            steps = 10 // (50-1) / 10 = 4.9 -> 4 koraka
+            steps = 100 // (50-1) / 10 = 4.9 -> 4 koraka
         )
         Text(
             text = if (radiusValue == FilterViewModel.MAX_RADIUS) "Any distance"

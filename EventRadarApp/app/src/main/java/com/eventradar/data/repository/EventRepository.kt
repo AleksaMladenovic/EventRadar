@@ -85,18 +85,26 @@ class EventRepository @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getFilteredEvents(): Flow<Result<List<Event>>> {
+        val significantLocationUpdates = locationRepository.getLocationUpdates()
+            .distinctUntilChanged { old, new ->
+                if (old == null) return@distinctUntilChanged false // Prva lokacija uvek prolazi
+                val distance = old.distanceTo(new)
+                println("LOCATION_DEBUG: Distance from last location: ${distance}m")
+                distance < 100f // Ako je distanca MANJA od 100m, smatraju se istim -> NE EMITUJ
+            }
+            .map<Location?, Location?>( { it } )
+            .onStart { emit(null) }
+
+
         // Kombinujemo filtere i lokaciju.
-        // distinctUntilChanged() je optimizacija koja sprečava ponovno izvršavanje
         // ako se filteri ili lokacija nisu suštinski promenili.
         return combine(
             filterRepository.filters,
-            // Koristimo 'startWith' da Flow lokacije odmah emituje null,
-            // što će pokrenuti inicijalni upit bez čekanja na prvu GPS lokaciju.
-            locationRepository.getLocationUpdates().map<Location?, Location?>( { it } ).onStart { emit(null) }
+            significantLocationUpdates,
         ) { filters, location ->
             println("FILTER_DEBUG: COMBINE triggered. Filters: radius=${filters.radiusInKm}km, category=${filters.category}. Location: ${location?.latitude}")
             Pair(filters, location)
-        }.distinctUntilChanged().flatMapLatest { (filters, location) ->
+        }.flatMapLatest { (filters, location) ->
             // Ako je filter za radijus aktivan i imamo lokaciju, radi geo-upit
             if (filters.radiusInKm != null && location != null) {
                 println("FILTER_DEBUG: ---> Entering GEO QUERY mode. Center: ${location.latitude}, Radius: ${filters.radiusInKm}km")

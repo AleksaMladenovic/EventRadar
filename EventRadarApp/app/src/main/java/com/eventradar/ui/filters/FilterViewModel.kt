@@ -36,6 +36,6 @@ class FilterViewModel @Inject constructor(
     }
 
     companion object {
-        const val MAX_RADIUS = 110f // Jedna vrednost više od maksimuma slidera za "bez limita"
+        const val MAX_RADIUS = 101f // Jedna vrednost više od maksimuma slidera za "bez limita"
     }
 }
