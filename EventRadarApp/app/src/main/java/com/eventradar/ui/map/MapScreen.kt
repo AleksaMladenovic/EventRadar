@@ -45,6 +45,7 @@ fun MapScreen(
     val mapState by mapViewModel.mapState.collectAsStateWithLifecycle()
     var permissionState by remember { mutableStateOf(LocationPermissionState.LOADING) }
     val cameraPositionState = rememberCameraPositionState()
+    val events by mapViewModel.eventsFlow.collectAsStateWithLifecycle(initialValue = Result.success(emptyList()))
 
     // Launcher za traženje dozvola
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -57,25 +58,6 @@ fun MapScreen(
             }
         }
     )
-
-    LaunchedEffect(arguments) {
-        if(arguments!=null){
-            val lat = arguments?.getString("lat")?.toDoubleOrNull()
-            val lng = arguments?.getString("lng")?.toDoubleOrNull()
-
-            if (lat != null && lng != null) {
-                val position = LatLng(lat, lng)
-                cameraPositionState.animate(
-                    update = CameraUpdateFactory.newLatLngZoom(position, 17f),
-                    durationMs = 1500
-                )
-                // Očisti argumente da se ne bi ponovo pokrenulo
-                arguments.remove("lat")
-                arguments.remove("lng")
-            }
-        }
-
-    }
 
 
     // Jednokratno traženje dozvola pri pokretanju ekrana
@@ -104,6 +86,25 @@ fun MapScreen(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
+    }
+
+    LaunchedEffect(arguments) {
+        if(arguments!=null){
+            val lat = arguments?.getString("lat")?.toDoubleOrNull()
+            val lng = arguments?.getString("lng")?.toDoubleOrNull()
+
+            if (lat != null && lng != null) {
+                val position = LatLng(lat, lng)
+                cameraPositionState.animate(
+                    update = CameraUpdateFactory.newLatLngZoom(position, 17f),
+                    durationMs = 1500
+                )
+                // Očisti argumente da se ne bi ponovo pokrenulo
+                arguments.remove("lat")
+                arguments.remove("lng")
+            }
+        }
+
     }
 
     LaunchedEffect(Unit) {
@@ -150,21 +151,28 @@ fun MapScreen(
                     uiSettings = MapUiSettings(myLocationButtonEnabled = true, zoomControlsEnabled = false)
                 ) {
                     // Prikaz postojećih markera za događaje
-                    mapState.events.forEach { event ->
-                        val category = EventCategory.fromString(event.category)
+                    events.onSuccess { eventList ->
+                        eventList.forEach { event ->
+                            val category = EventCategory.fromString(event.category)
 
-                        Marker(
-                            state = MarkerState(position = LatLng(event.location.latitude, event.location.longitude)),
-                            title = event.name,
-                            snippet = event.description,
-                            onInfoWindowClick = {
-                                onNavigateToEventDetails(event.id)
-                            },
-                            icon = BitmapDescriptorFactory.defaultMarker(
-                                category.markerHue
+                            Marker(
+                                state = MarkerState(
+                                    position = LatLng(
+                                        event.location.latitude,
+                                        event.location.longitude
+                                    )
+                                ),
+                                title = event.name,
+                                snippet = event.description,
+                                onInfoWindowClick = {
+                                    onNavigateToEventDetails(event.id)
+                                },
+                                icon = BitmapDescriptorFactory.defaultMarker(
+                                    category.markerHue
+                                )
+
                             )
-
-                        )
+                        }
                     }
                 }
 
