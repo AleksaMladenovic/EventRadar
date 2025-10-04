@@ -118,7 +118,7 @@ class EventRepository @Inject constructor(
         filters.endDate?.let {
             query = query.whereLessThanOrEqualTo("eventTimestamp", it)
         }
-
+        query = query.orderBy("eventTimestamp", Query.Direction.ASCENDING)
         val listener = query.addSnapshotListener { snapshot, error ->
             if (error != null) {
                 trySend(Result.failure(error)); return@addSnapshotListener
@@ -134,14 +134,15 @@ class EventRepository @Inject constructor(
         )
         val eventsInRadius = mutableMapOf<String, Event>()
 
-        val listenerRegistration = geoQuery.addGeoQueryEventListener(object : GeoQueryEventListener {
+        geoQuery.addGeoQueryEventListener(object : GeoQueryEventListener {
             override fun onKeyEntered(documentID: String, location: GeoPoint) {
                 firestore.collection("events").document(documentID).get()
                     .addOnSuccessListener { document ->
                         document.toObject<Event>()?.let { event ->
                             if (matchesClientSideFilters(event, filters)) {
                                 eventsInRadius[documentID] = event
-                                trySend(Result.success(eventsInRadius.values.toList()))
+                                val sortedList = eventsInRadius.values.sortedBy { it.eventTimestamp }
+                                trySend(Result.success(sortedList))
                             }
                         }
                     }
@@ -149,11 +150,15 @@ class EventRepository @Inject constructor(
 
             override fun onKeyExited(documentID: String) {
                 if (eventsInRadius.remove(documentID) != null) {
-                    trySend(Result.success(eventsInRadius.values.toList()))
+                    val sortedList = eventsInRadius.values.sortedBy { it.eventTimestamp }
+                    trySend(Result.success(sortedList))
                 }
             }
             override fun onKeyMoved(documentID: String, location: GeoPoint) { /* Ignoriši */ }
-            override fun onGeoQueryReady() { trySend(Result.success(eventsInRadius.values.toList())) }
+            override fun onGeoQueryReady() {
+                val sortedList = eventsInRadius.values.sortedBy { it.eventTimestamp }
+                trySend(Result.success(sortedList))
+            }
             override fun onGeoQueryError(exception: Exception) { trySend(Result.failure(exception)) }
         })
 
