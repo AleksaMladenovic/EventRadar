@@ -16,17 +16,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.eventradar.navigation.graphs.HomeNavGraph
 import com.eventradar.ui.components.BottomBar
 import com.eventradar.ui.filters.FilterBottomSheet
 import com.eventradar.ui.navigation.BottomNavItem
 import com.eventradar.R
+import com.eventradar.navigation.Routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,9 +37,12 @@ fun MainScreen(rootNavController: NavController) {
     val homeNavController = rememberNavController()
     val sheetState = rememberModalBottomSheetState()
     var isSheetOpen by remember { mutableStateOf(false) }
+    val navBackStackEntry by homeNavController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
     Scaffold(
         topBar = {
+            if(currentRoute == Routes.MAP_SCREEN || currentRoute== Routes.EVENTS_LIST_SCREEN)
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
