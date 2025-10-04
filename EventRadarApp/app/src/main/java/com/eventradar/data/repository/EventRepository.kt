@@ -88,112 +88,88 @@ class EventRepository @Inject constructor(
     fun getFilteredEvents(): Flow<Result<List<Event>>> {
         val significantLocationUpdates = locationRepository.getLocationUpdates()
             .distinctUntilChanged { old, new ->
-                if (old == null) return@distinctUntilChanged false // Prva lokacija uvek prolazi
-                val distance = old.distanceTo(new)
-                println("LOCATION_DEBUG: Distance from last location: ${distance}m")
-                distance < 100f // Ako je distanca MANJA od 100m, smatraju se istim -> NE EMITUJ
+                old.distanceTo(new) < 100f // Emituj samo ako je promena veća od 100m
             }
-            .map<Location?, Location?>( { it } )
-            .onStart { emit(null) }
+            .onStart<Location?> { emit(null) } // Odmah emituj null da bi upit krenuo
 
-
-        // Kombinujemo filtere i lokaciju.
-        // ako se filteri ili lokacija nisu suštinski promenili.
         return combine(
             filterRepository.filters,
-            significantLocationUpdates,
+            significantLocationUpdates
         ) { filters, location ->
             Pair(filters, location)
         }.flatMapLatest { (filters, location) ->
-            // Ako je filter za radijus aktivan i imamo lokaciju, radi geo-upit
             if (filters.radiusInKm != null && location != null) {
                 createGeoQueryFlow(filters, location)
             } else {
-                // U suprotnom, radi običan upit (samo sa filterom za kategoriju)
                 createNormalQueryFlow(filters)
             }
         }
     }
 
-    // Pomoćna funkcija za OBIČAN upit (filtriranje samo po kategoriji)
     private fun createNormalQueryFlow(filters: EventFilters): Flow<Result<List<Event>>> = callbackFlow {
         var query: Query = firestore.collection("events")
 
-        if(filters.categories.isNotEmpty()){
+        if (filters.categories.isNotEmpty()) {
             query = query.whereIn("category", filters.categories.map { it.name })
+        }
+        filters.startDate?.let {
+            query = query.whereGreaterThanOrEqualTo("eventTimestamp", it)
+        }
+        filters.endDate?.let {
+            query = query.whereLessThanOrEqualTo("eventTimestamp", it)
         }
 
         val listener = query.addSnapshotListener { snapshot, error ->
             if (error != null) {
-                trySend(Result.failure(error))
-                return@addSnapshotListener
+                trySend(Result.failure(error)); return@addSnapshotListener
             }
-            if (snapshot != null) {
-                val events = snapshot.toObjects(Event::class.java)
-                trySend(Result.success(events))
-            }
+            snapshot?.let { trySend(Result.success(it.toObjects(Event::class.java))) }
         }
         awaitClose { listener.remove() }
     }
 
-    // Pomoćna funkcija za GEO-UPIT (filtriranje po radijusu i kategoriji)
-    private fun createGeoQueryFlow(filters: EventFilters, location: android.location.Location): Flow<Result<List<Event>>> = callbackFlow {
-        // Kreiramo geo-upit sa centrom na lokaciji korisnika i radijusom iz filtera
+    private fun createGeoQueryFlow(filters: EventFilters, location: Location): Flow<Result<List<Event>>> = callbackFlow {
         val geoQuery: GeoQuery = geoFirestore.queryAtLocation(
-            GeoPoint(location.latitude, location.longitude),
-            filters.radiusInKm!! // Sigurni smo da nije null zbog logike u getFilteredEvents
+            GeoPoint(location.latitude, location.longitude), filters.radiusInKm!!
         )
-
-        // Mapa koja čuva sve događaje koji su trenutno unutar radijusa
         val eventsInRadius = mutableMapOf<String, Event>()
 
-        val listener = geoQuery.addGeoQueryEventListener(object : GeoQueryEventListener {
+        val listenerRegistration = geoQuery.addGeoQueryEventListener(object : GeoQueryEventListener {
             override fun onKeyEntered(documentID: String, location: GeoPoint) {
-                println("FILTER_DEBUG: onKeyEntered: Found key in radius: $documentID")
-                // Događaj je UŠAO u radijus. Sada moramo da dobavimo njegove pune podatke.
                 firestore.collection("events").document(documentID).get()
                     .addOnSuccessListener { document ->
                         document.toObject<Event>()?.let { event ->
-                            val categoryFilter = filters.categories
-                            if (categoryFilter.isEmpty() || EventCategory.fromString(event.category) in categoryFilter) {
+                            if (matchesClientSideFilters(event, filters)) {
                                 eventsInRadius[documentID] = event
                                 trySend(Result.success(eventsInRadius.values.toList()))
                             }
-
                         }
                     }
             }
 
             override fun onKeyExited(documentID: String) {
-                // Događaj je IZAŠAO iz radijusa. Ukloni ga iz mape.
-                if (eventsInRadius.containsKey(documentID)) {
-                    eventsInRadius.remove(documentID)
+                if (eventsInRadius.remove(documentID) != null) {
                     trySend(Result.success(eventsInRadius.values.toList()))
                 }
             }
-
-            override fun onKeyMoved(documentID: String, location: GeoPoint) {
-                // Ignorišemo za sada, ali ovo se desi ako se lokacija postojećeg događaja promeni
-            }
-
-            override fun onGeoQueryReady() {
-                println("FILTER_DEBUG: GeoQuery is ready. Total events in radius: ${eventsInRadius.size}")
-                // Svi početni događaji su učitani. Možemo poslati inicijalno stanje.
-                println("GeoQuery is ready. Found ${eventsInRadius.size} events.")
-                trySend(Result.success(eventsInRadius.values.toList()))
-            }
-
-            override fun onGeoQueryError(exception: Exception) {
-                println("FILTER_DEBUG: GEO QUERY FAILED: ${exception.message}")
-                // Greška u geo-upitu
-                trySend(Result.failure(exception))
-            }
+            override fun onKeyMoved(documentID: String, location: GeoPoint) { /* Ignoriši */ }
+            override fun onGeoQueryReady() { trySend(Result.success(eventsInRadius.values.toList())) }
+            override fun onGeoQueryError(exception: Exception) { trySend(Result.failure(exception)) }
         })
 
-        // Kada se Flow otkaže, ukloni GeoQuery listener
-        awaitClose {
-            geoQuery.removeAllListeners()
-        }
+        awaitClose { geoQuery.removeAllListeners() }
+    }
+
+    private fun matchesClientSideFilters(event: Event, filters: EventFilters): Boolean {
+        val categoryMatch = filters.categories.isEmpty() || EventCategory.fromString(event.category) in filters.categories
+
+        val dateMatch = event.eventTimestamp?.toDate()?.let { eventDate ->
+            val startOk = filters.startDate?.let { !it.after(eventDate) } ?: true
+            val endOk = filters.endDate?.let { !it.before(eventDate) } ?: true
+            startOk && endOk
+        } ?: (filters.startDate == null && filters.endDate == null)
+
+        return categoryMatch && dateMatch
     }
 
     fun getEventById(eventId: String): Flow<Result<Event>> = callbackFlow {

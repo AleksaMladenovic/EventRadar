@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
@@ -38,6 +39,15 @@ class FilterViewModel @Inject constructor(
             else currentCategories.add(category)
             currentFilters.copy(categories = currentCategories)
         }
+    }
+
+
+    fun onStartDateChanged(date: Date?) {
+        _temporaryFilters.update { it.copy(startDate = date) }
+    }
+
+    fun onEndDateChanged(date: Date?) {
+        _temporaryFilters.update { it.copy(endDate = date) }
     }
 
     fun onRadiusChange(radius: Float) {

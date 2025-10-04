@@ -7,11 +7,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eventradar.data.model.EventCategory
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,10 +54,11 @@ fun FilterBottomSheet(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+
+        // Slider za radijus
         Text("Filter by Radius", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Slider za radijus
         val radiusValue = filters.radiusInKm?.toFloat() ?: FilterViewModel.MAX_RADIUS
         Slider(
             value = radiusValue,
@@ -65,6 +71,23 @@ fun FilterBottomSheet(
             else "Within ${radiusValue.toInt()} km",
             modifier = Modifier.align(Alignment.End)
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Filter by Date Range", style = MaterialTheme.typography.titleMedium)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            DatePickerField(
+                label = "From",
+                date = filters.startDate,
+                onDateSelected = { viewModel.onStartDateChanged(it) },
+                modifier = Modifier.weight(1f)
+            )
+            DatePickerField(
+                label = "To",
+                date = filters.endDate,
+                onDateSelected = { viewModel.onEndDateChanged(it) },
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -90,5 +113,54 @@ fun FilterBottomSheet(
             }
         }
 
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DatePickerField(
+    modifier: Modifier = Modifier,
+    label: String,
+    date: Date?,
+    onDateSelected: (Date) -> Unit
+) {
+    var showDatePicker by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+    val dateFormatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
+
+    OutlinedTextField(
+        value = date?.let { dateFormatter.format(it) } ?: "",
+        onValueChange = {},
+        readOnly = true,
+        label = { Text(label) },
+        modifier = modifier.onFocusChanged { if (it.isFocused) showDatePicker = true }
+    )
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = date?.time)
+        DatePickerDialog(
+            onDismissRequest = {
+                showDatePicker = false
+                focusManager.clearFocus()
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { onDateSelected(Date(it)) }
+                        showDatePicker = false
+                        focusManager.clearFocus()
+                    }
+                ) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showDatePicker = false
+                    focusManager.clearFocus()
+                }) { Text("Cancel") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 }
