@@ -4,10 +4,13 @@ import android.location.Location
 import com.eventradar.data.model.Event
 import com.eventradar.data.model.EventCategory
 import com.eventradar.data.model.EventFilters
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.toObject
+import com.google.firebase.firestore.toObjects
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -124,42 +127,79 @@ class EventRepository @Inject constructor(
         awaitClose { listener.remove() }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun createGeoQueryFlow(filters: EventFilters, location: Location): Flow<Result<List<Event>>> = callbackFlow {
         val geoQuery: GeoQuery = geoFirestore.queryAtLocation(
-            GeoPoint(location.latitude, location.longitude), filters.radiusInKm!!
+            GeoPoint(location.latitude, location.longitude),
+            filters.radiusInKm!!
         )
-        val eventsInRadius = mutableMapOf<String, Event>()
 
+        var firestoreListener: ListenerRegistration? = null
+        // Mapa koja čuva ID-jeve svih dokumenata koji su trenutno u radijusu
+        val documentIdsInRadius = mutableSetOf<String>()
+
+        fun updateFirestoreListener() {
+            // Ukloni starog Firestore listener-a pre nego što postaviš novog
+            firestoreListener?.remove()
+
+            // Ako nema događaja u radijusu, odmah pošalji praznu listu
+            if (documentIdsInRadius.isEmpty()) {
+                trySend(Result.success(emptyList()))
+                return
+            }
+
+            // Kreiraj NOVI Firestore upit sa 'whereIn' na AŽURIRANIM ID-jevima
+            firestoreListener = firestore.collection("events")
+                .whereIn(FieldPath.documentId(), documentIdsInRadius.toList()) // .toList() je važno
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        trySend(Result.failure(error))
+                        return@addSnapshotListener
+                    }
+                    if (snapshot != null) {
+                        val events = snapshot.toObjects<Event>()
+                        val filteredEvents = events.filter { event ->
+                            matchesClientSideFilters(event, filters)
+                        }
+                        val sortedList = filteredEvents.sortedBy { it.eventTimestamp }
+                        trySend(Result.success(sortedList))
+                    }
+                }
+        }
+
+        // Glavni listener za GeoQuery
         geoQuery.addGeoQueryEventListener(object : GeoQueryEventListener {
             override fun onKeyEntered(documentID: String, location: GeoPoint) {
-                firestore.collection("events").document(documentID).get()
-                    .addOnSuccessListener { document ->
-                        document.toObject<Event>()?.let { event ->
-                            if (matchesClientSideFilters(event, filters)) {
-                                eventsInRadius[documentID] = event
-                                val sortedList = eventsInRadius.values.sortedBy { it.eventTimestamp }
-                                trySend(Result.success(sortedList))
-                            }
-                        }
-                    }
+                // Dodaj novi ID i osveži Firestore listener
+                documentIdsInRadius.add(documentID)
+                updateFirestoreListener()
             }
 
             override fun onKeyExited(documentID: String) {
-                if (eventsInRadius.remove(documentID) != null) {
-                    val sortedList = eventsInRadius.values.sortedBy { it.eventTimestamp }
-                    trySend(Result.success(sortedList))
-                }
+                // Ukloni ID i osveži Firestore listener
+                documentIdsInRadius.remove(documentID)
+                updateFirestoreListener()
             }
-            override fun onKeyMoved(documentID: String, location: GeoPoint) { /* Ignoriši */ }
+
+            // Ove metode sada ne moraju ništa da rade
+            override fun onKeyMoved(documentID: String, location: GeoPoint) {}
             override fun onGeoQueryReady() {
-                val sortedList = eventsInRadius.values.sortedBy { it.eventTimestamp }
-                trySend(Result.success(sortedList))
+                // Kada je GeoQuery spreman, možemo da pokrenemo prvi Firestore listener
+                updateFirestoreListener()
+
             }
-            override fun onGeoQueryError(exception: Exception) { trySend(Result.failure(exception)) }
+            override fun onGeoQueryError(exception: Exception) {
+                trySend(Result.failure(exception))
+            }
         })
 
-        awaitClose { geoQuery.removeAllListeners() }
+        // Kada se Flow otkaže, ukloni oba listener-a
+        awaitClose {
+            firestoreListener?.remove()
+            geoQuery.removeAllListeners()
+        }
     }
+
 
     private fun matchesClientSideFilters(event: Event, filters: EventFilters): Boolean {
         val categoryMatch = filters.categories.isEmpty() || EventCategory.fromString(event.category) in filters.categories
