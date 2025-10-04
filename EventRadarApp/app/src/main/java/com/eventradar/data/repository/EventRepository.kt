@@ -86,21 +86,17 @@ class EventRepository @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getFilteredEvents(): Flow<Result<List<Event>>> {
-        val significantLocationUpdates = locationRepository.getLocationUpdates()
-            .distinctUntilChanged { old, new ->
-                old.distanceTo(new) < 100f // Emituj samo ako je promena veća od 100m
-            }
-            .onStart<Location?> { emit(null) } // Odmah emituj null da bi upit krenuo
+        val locationFlow = locationRepository.getLocationUpdates()
+            .distinctUntilChanged { old, new -> old.distanceTo(new) < 100f }
 
-        return combine(
-            filterRepository.filters,
-            significantLocationUpdates
-        ) { filters, location ->
-            Pair(filters, location)
-        }.flatMapLatest { (filters, location) ->
-            if (filters.radiusInKm != null && location != null) {
-                createGeoQueryFlow(filters, location)
+        return filterRepository.filters.flatMapLatest { filters ->
+            if (filters.radiusInKm != null) {
+                locationFlow.flatMapLatest { location ->
+                    println("FILTER_DEBUG: Radius filter is active. Using GEO QUERY.")
+                    createGeoQueryFlow(filters, location)
+                }
             } else {
+                println("FILTER_DEBUG: Radius filter is NOT active. Using NORMAL QUERY.")
                 createNormalQueryFlow(filters)
             }
         }
