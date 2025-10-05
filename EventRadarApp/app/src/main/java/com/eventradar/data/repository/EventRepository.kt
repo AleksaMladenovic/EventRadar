@@ -88,7 +88,7 @@ class EventRepository @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getFilteredEvents(): Flow<Result<List<Event>>> {
+    fun getFilteredEvents(userId: String? = null): Flow<Result<List<Event>>> {
         val locationFlow = locationRepository.getLocationUpdates()
             .distinctUntilChanged { old, new -> old.distanceTo(new) < 100f }
 
@@ -96,18 +96,20 @@ class EventRepository @Inject constructor(
             if (filters.radiusInKm != null) {
                 locationFlow.flatMapLatest { location ->
                     println("FILTER_DEBUG: Radius filter is active. Using GEO QUERY.")
-                    createGeoQueryFlow(filters, location)
+                    createGeoQueryFlow(filters, location, userId)
                 }
             } else {
                 println("FILTER_DEBUG: Radius filter is NOT active. Using NORMAL QUERY.")
-                createNormalQueryFlow(filters)
+                createNormalQueryFlow(filters, userId)
             }
         }
     }
 
-    private fun createNormalQueryFlow(filters: EventFilters): Flow<Result<List<Event>>> = callbackFlow {
+    private fun createNormalQueryFlow(filters: EventFilters, userId: String? = null): Flow<Result<List<Event>>> = callbackFlow {
         var query: Query = firestore.collection("events")
-
+        if (!userId.isNullOrBlank()) {
+            query = query.whereEqualTo("creatorId", userId)
+        }
         if (filters.categories.isNotEmpty()) {
             query = query.whereIn("category", filters.categories.map { it.name })
         }
@@ -128,7 +130,7 @@ class EventRepository @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun createGeoQueryFlow(filters: EventFilters, location: Location): Flow<Result<List<Event>>> = callbackFlow {
+    private fun createGeoQueryFlow(filters: EventFilters, location: Location, userId: String? = null): Flow<Result<List<Event>>> = callbackFlow {
         val geoQuery: GeoQuery = geoFirestore.queryAtLocation(
             GeoPoint(location.latitude, location.longitude),
             filters.radiusInKm!!
@@ -159,7 +161,7 @@ class EventRepository @Inject constructor(
                     if (snapshot != null) {
                         val events = snapshot.toObjects<Event>()
                         val filteredEvents = events.filter { event ->
-                            matchesClientSideFilters(event, filters)
+                            matchesClientSideFilters(event, filters, userId)
                         }
                         val sortedList = filteredEvents.sortedBy { it.eventTimestamp }
                         trySend(Result.success(sortedList))
@@ -201,7 +203,7 @@ class EventRepository @Inject constructor(
     }
 
 
-    private fun matchesClientSideFilters(event: Event, filters: EventFilters): Boolean {
+    private fun matchesClientSideFilters(event: Event, filters: EventFilters,userId: String? = null): Boolean {
         val categoryMatch = filters.categories.isEmpty() || EventCategory.fromString(event.category) in filters.categories
 
         val dateMatch = event.eventTimestamp?.toDate()?.let { eventDate ->
@@ -210,7 +212,9 @@ class EventRepository @Inject constructor(
             startOk && endOk
         } ?: (filters.startDate == null && filters.endDate == null)
 
-        return categoryMatch && dateMatch
+        val userMatch = userId.isNullOrBlank() || event.creatorId == userId
+
+        return categoryMatch && dateMatch && userMatch
     }
 
     fun getEventById(eventId: String): Flow<Result<Event>> = callbackFlow {

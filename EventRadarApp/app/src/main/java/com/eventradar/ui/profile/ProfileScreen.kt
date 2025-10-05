@@ -29,8 +29,8 @@ import com.eventradar.data.model.User
 
 @Composable
 fun ProfileScreen(
-    // Više ne treba onLogout, jer ViewModel sada direktno komunicira sa AuthRepository
-    viewModel: ProfileViewModel = hiltViewModel()
+    viewModel: ProfileViewModel = hiltViewModel(),
+    onNavigateToMyEvents : (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -49,7 +49,8 @@ fun ProfileScreen(
             state.user != null -> {
                 ProfileContent(
                     user = state.user!!,
-                    onSignOut = { viewModel.signOut() }
+                    onSignOut = { viewModel.signOut() },
+                    onNavigateToMyEvents
                 )
             }
         }
@@ -57,7 +58,11 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun ProfileContent(user: User, onSignOut: () -> Unit) {
+private fun ProfileContent(
+    user: User,
+    onSignOut: () -> Unit,
+    onNavigateToMyEvents : (String) -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -126,6 +131,9 @@ private fun ProfileContent(user: User, onSignOut: () -> Unit) {
 
         Spacer(modifier = Modifier.weight(1f)) // Gura dugme na dno
 
+        Button(onClick = {onNavigateToMyEvents(user.uid)}) {
+            Text("My Events")
+        }
         // Dugme za odjavu
         Button(
             onClick = onSignOut,

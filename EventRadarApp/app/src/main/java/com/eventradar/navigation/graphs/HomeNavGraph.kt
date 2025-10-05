@@ -2,6 +2,7 @@ package com.eventradar.navigation.graphs
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -10,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.eventradar.navigation.Routes
 import com.eventradar.ui.add_event.AddEventScreen
+import com.eventradar.ui.auth.AuthViewModel
 import com.eventradar.ui.event_details.EventDetailsScreen
 import com.eventradar.ui.events_list.EventsListScreen
 import com.eventradar.ui.map.MapScreen
@@ -42,17 +44,37 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
             )
 
         }
-        composable(Routes.EVENTS_LIST_SCREEN) {
+        composable(
+            route= Routes.EVENTS_LIST_SCREEN
+            ) {
             EventsListScreen(
                 onNavigateToEventDetails = { eventId ->
                     homeNavController.navigate("event_details/$eventId")
-                })
+                },
+            )
+        }
+
+        composable(
+            route = Routes.USER_EVENTS_SCREEN,
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType }
+            )
+        ) {
+            EventsListScreen(
+                onNavigateToEventDetails = { eventId ->
+                    homeNavController.navigate("event_details/$eventId")
+                }
+            )
         }
         composable(Routes.RANKING_SCREEN) {
             RankingScreen()
         }
         composable(Routes.PROFILE_SCREEN) {
-            ProfileScreen()
+            ProfileScreen(
+                onNavigateToMyEvents = { currentUserId->
+                    homeNavController.navigate("user_events/$currentUserId")
+                }
+            )
         }
         composable(
             route = Routes.ADD_EVENT_SCREEN,

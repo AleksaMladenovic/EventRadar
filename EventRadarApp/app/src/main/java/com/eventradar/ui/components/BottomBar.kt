@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.eventradar.navigation.Routes
 import com.eventradar.ui.navigation.BottomNavItem
 
 @Composable
@@ -30,6 +31,10 @@ fun BottomBar(
                         }
                         launchSingleTop = true
                         restoreState = true
+                        if(item.route== Routes.PROFILE_SCREEN){
+                            restoreState = false
+                            launchSingleTop = true
+                        }
                     }
                 },
                 label = {

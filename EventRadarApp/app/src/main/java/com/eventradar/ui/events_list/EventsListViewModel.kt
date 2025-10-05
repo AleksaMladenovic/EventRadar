@@ -1,5 +1,6 @@
 package com.eventradar.ui.events_list
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eventradar.data.model.Event
@@ -20,16 +21,17 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EventsListViewModel @Inject constructor(
-    private val eventRepository: EventRepository
+    private val eventRepository: EventRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EventsListState())
     val state: StateFlow<EventsListState> = _state.asStateFlow()
-
+    private val userId: String? = savedStateHandle.get("userId")
 
     init {
         viewModelScope.launch {
-            eventRepository.getFilteredEvents().collect { result ->
+            eventRepository.getFilteredEvents(userId).collect { result ->
                 result.onSuccess { events ->
                     _state.update {
                         it.copy(
