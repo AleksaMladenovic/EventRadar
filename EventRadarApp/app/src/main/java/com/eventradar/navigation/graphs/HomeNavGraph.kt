@@ -14,12 +14,13 @@ import com.eventradar.ui.event_details.EventDetailsScreen
 import com.eventradar.ui.events_list.EventsListScreen
 import com.eventradar.ui.map.MapScreen
 import com.eventradar.ui.profile.ProfileScreen
+import com.eventradar.ui.public_profile.PublicProfileScreen
 import com.eventradar.ui.ranking.RankingScreen
 
 @Composable
-fun HomeNavGraph(navController: NavHostController, rootNavController: NavController, modifier: Modifier = Modifier) {
+fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavController, modifier: Modifier = Modifier) {
     NavHost(
-        navController = navController,
+        navController = homeNavController,
         startDestination = Routes.MAP_SCREEN,
         modifier = modifier
     ) {
@@ -33,10 +34,10 @@ fun HomeNavGraph(navController: NavHostController, rootNavController: NavControl
             MapScreen(
                 arguments = backStackEntry.arguments,
                 onNavigateToAddEvent = { latLng ->
-                    navController.navigate("add_event/${latLng.latitude}/${latLng.longitude}")
+                    homeNavController.navigate("add_event/${latLng.latitude}/${latLng.longitude}")
                 },
                 onNavigateToEventDetails = { eventId ->
-                    navController.navigate("event_details/$eventId")
+                    homeNavController.navigate("event_details/$eventId")
                 }
             )
 
@@ -44,7 +45,7 @@ fun HomeNavGraph(navController: NavHostController, rootNavController: NavControl
         composable(Routes.EVENTS_LIST_SCREEN) {
             EventsListScreen(
                 onNavigateToEventDetails = { eventId ->
-                    navController.navigate("event_details/$eventId")
+                    homeNavController.navigate("event_details/$eventId")
                 })
         }
         composable(Routes.RANKING_SCREEN) {
@@ -62,7 +63,7 @@ fun HomeNavGraph(navController: NavHostController, rootNavController: NavControl
         ) {
             AddEventScreen(
                 onEventAdded = {
-                    navController.popBackStack()
+                    homeNavController.popBackStack()
                 }
             )
         }
@@ -77,13 +78,31 @@ fun HomeNavGraph(navController: NavHostController, rootNavController: NavControl
             EventDetailsScreen(
                 onNavigateToMap = { latLng ->
                     // Sada samo pozivamo navigaciju na mapu sa argumentima
-                    navController.navigate("map?lat=${latLng.latitude}&lng=${latLng.longitude}") {
+                    homeNavController.navigate("map?lat=${latLng.latitude}&lng=${latLng.longitude}") {
                         // Vraća nas na mapu i osigurava da imamo samo jednu instancu mape
                         popUpTo(Routes.MAP_SCREEN) { inclusive = true }
                     }
                 },
                 onNavigateBack = {
-                    navController.popBackStack()
+                    homeNavController.popBackStack()
+                },
+                onCreatorClick = { userId ->
+                    homeNavController.navigate("public_profile/$userId")
+                }
+            )
+        }
+
+        composable(
+            route = Routes.PUBLIC_PROFILE_SCREEN,
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType }
+            )
+        ) {
+            PublicProfileScreen(
+                onNavigateBack = { homeNavController.popBackStack() },
+                onNavigateToEventDetails = { eventId ->
+                    // Sa ovog ekrana takođe možemo da idemo na detalje događaja
+                    homeNavController.navigate("event_details/$eventId")
                 }
             )
         }

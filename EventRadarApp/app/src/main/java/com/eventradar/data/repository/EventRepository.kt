@@ -230,4 +230,20 @@ class EventRepository @Inject constructor(
         }
         awaitClose { listener.remove() }
     }
+
+    fun getEventsByCreator(userId: String): Flow<Result<List<Event>>> = callbackFlow {
+        val listener = firestore.collection("events")
+            .whereEqualTo("creatorId", userId)
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(Result.failure(error))
+                    return@addSnapshotListener
+                }
+                snapshot?.let {
+                    trySend(Result.success(it.toObjects(Event::class.java)))
+                }
+            }
+        awaitClose { listener.remove() }
+    }
 }

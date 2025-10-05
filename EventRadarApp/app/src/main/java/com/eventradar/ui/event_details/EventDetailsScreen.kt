@@ -1,5 +1,6 @@
 package com.eventradar.ui.event_details
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,6 +33,7 @@ fun EventDetailsScreen(
     viewModel: EventDetailsViewModel = hiltViewModel(),
     onNavigateToMap: (LatLng) -> Unit,
     onNavigateBack: () -> Unit,
+    onCreatorClick: (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Kreiramo lokalnu, nepromenljivu kopiju
@@ -57,7 +59,7 @@ fun EventDetailsScreen(
 
                 state.event != null -> {
                     // Ako je sve u redu, prikaži detalje
-                    EventDetailsContent(event = state.event!!, onShowMap = onNavigateToMap)
+                    EventDetailsContent(event = state.event!!, onShowMap = onNavigateToMap, onCreatorClick = onCreatorClick)
                 }
             }
         }
@@ -67,7 +69,8 @@ fun EventDetailsScreen(
 @Composable
 fun EventDetailsContent(
     event: Event,
-    onShowMap: (LatLng) -> Unit
+    onShowMap: (LatLng) -> Unit,
+    onCreatorClick: (String)-> Unit
 ) {
     val dateFormatter = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault())
     val latLng = LatLng(event.location.latitude, event.location.longitude)
@@ -95,10 +98,14 @@ fun EventDetailsContent(
                 icon = Icons.Default.LocationOn,
                 text = "Location (Lat: ${event.location.latitude}, Lng: ${event.location.longitude})"
             )
-            DetailRow(
-                icon = Icons.Default.Person,
-                text = stringResource(id = R.string.event_created_by, event.creatorName)
-            )
+            Row(
+                modifier = Modifier.clickable { onCreatorClick(event.creatorId) },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(text = stringResource(id = R.string.event_created_by, event.creatorName), style = MaterialTheme.typography.bodyLarge)
+            }
             DetailRow(
                 icon = Icons.Default.AttachMoney,
                 text = if (event.isFree)

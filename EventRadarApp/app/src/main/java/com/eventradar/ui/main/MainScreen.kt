@@ -1,6 +1,5 @@
 package com.eventradar.ui.main
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
@@ -16,11 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -65,7 +62,7 @@ fun MainScreen(rootNavController: NavController) {
         }
     ) { paddingValues ->
         HomeNavGraph(
-            navController = homeNavController,
+            homeNavController = homeNavController,
             rootNavController = rootNavController,
             modifier = Modifier.padding(paddingValues)
         )
