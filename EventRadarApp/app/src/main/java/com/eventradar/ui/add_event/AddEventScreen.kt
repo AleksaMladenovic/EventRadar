@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EditLocation
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,8 +22,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.eventradar.R
 import com.eventradar.data.model.EventCategory
+import com.eventradar.navigation.Routes
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.collectLatest
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -31,7 +36,8 @@ import java.util.Locale
 @Composable
 fun AddEventScreen(
     addEventViewModel: AddEventViewModel = hiltViewModel(),
-    onEventAdded: () -> Unit
+    onEventAdded: () -> Unit,
+    navController: NavController,
 ) {
     val formState by addEventViewModel.formState.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
@@ -42,6 +48,14 @@ fun AddEventScreen(
 
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
+
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    LaunchedEffect(savedStateHandle) {
+        savedStateHandle?.getLiveData<LatLng>("picked_location")?.observe(navController.currentBackStackEntry!!) { result ->
+            addEventViewModel.onLocationChanged(result)
+            savedStateHandle.remove<LatLng>("picked_location")
+        }
+    }
 
     LaunchedEffect(Unit) {
         addEventViewModel.addEventResult.collectLatest { result ->
@@ -68,6 +82,22 @@ fun AddEventScreen(
             modifier = Modifier.align(Alignment.CenterHorizontally),
             style = MaterialTheme.typography.headlineMedium
         )
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedButton(
+            onClick = {
+                formState.location?.let { geoPoint ->
+                    // Sada navigiramo sa argumentima u ruti
+                    navController.navigate(
+                        "location_picker/${geoPoint.latitude}/${geoPoint.longitude}"
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.EditLocation, contentDescription = "Change Location")
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Change Location")
+        }
         Spacer(modifier = Modifier.height(24.dp))
 
         OutlinedTextField(
@@ -99,6 +129,8 @@ fun AddEventScreen(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+
 
         val dateFormatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
         OutlinedTextField(

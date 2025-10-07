@@ -16,4 +16,6 @@ object Routes {
     const val EVENT_DETAILS_SCREEN = "event_details/{eventId}"
     const val PUBLIC_PROFILE_SCREEN = "public_profile/{userId}"
     const val USER_EVENTS_SCREEN = "user_events/{userId}"
+    const val LOCATION_PICKER_SCREEN = "location_picker/{lat}/{lng}"
+
 }

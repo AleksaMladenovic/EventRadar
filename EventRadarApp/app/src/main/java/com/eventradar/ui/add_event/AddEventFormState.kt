@@ -2,6 +2,7 @@ package com.eventradar.ui.add_event
 
 import androidx.annotation.StringRes
 import com.eventradar.data.model.EventCategory
+import com.google.firebase.firestore.GeoPoint
 import java.util.Date
 
 data class AddEventFormState(
@@ -14,8 +15,7 @@ data class AddEventFormState(
     val ageRestriction: Boolean = false, // Jednostavan switch
     val free: Boolean = true,
     val price: String = "",
-    // URI slike koju je korisnik izabrao (za kasnije)
-    // val eventImageUri: Uri? = null,
+    val location: GeoPoint? = null,
 
     // Statusi
     val isLoading: Boolean = false,

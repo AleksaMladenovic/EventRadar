@@ -14,10 +14,12 @@ import com.eventradar.ui.add_event.AddEventScreen
 import com.eventradar.ui.auth.AuthViewModel
 import com.eventradar.ui.event_details.EventDetailsScreen
 import com.eventradar.ui.events_list.EventsListScreen
+import com.eventradar.ui.location_picker.LocationPickerScreen
 import com.eventradar.ui.map.MapScreen
 import com.eventradar.ui.profile.ProfileScreen
 import com.eventradar.ui.public_profile.PublicProfileScreen
 import com.eventradar.ui.ranking.RankingScreen
+import com.google.android.gms.maps.model.LatLng
 
 @Composable
 fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavController, modifier: Modifier = Modifier) {
@@ -96,7 +98,8 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
             AddEventScreen(
                 onEventAdded = {
                     homeNavController.popBackStack()
-                }
+                },
+                navController = homeNavController,
             )
         }
         composable(
@@ -139,5 +142,33 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
                 }
             )
         }
+
+        composable(
+            route = Routes.LOCATION_PICKER_SCREEN,
+            arguments = listOf(
+                navArgument("lat") { type = NavType.StringType },
+                navArgument("lng") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val lat = backStackEntry.arguments?.getString("lat")?.toDoubleOrNull() ?: 0.0
+            val lng = backStackEntry.arguments?.getString("lng")?.toDoubleOrNull() ?: 0.0
+            val initialLocation = LatLng(lat, lng)
+
+            LocationPickerScreen(
+                initialLocation = initialLocation,
+                onLocationSelected = { newLocation ->
+                    homeNavController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("picked_location", newLocation)
+
+                    homeNavController.popBackStack()
+                },
+                onNavigateBack = {
+                    homeNavController.popBackStack()
+                }
+            )
+        }
+
+
     }
 }

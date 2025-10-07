@@ -17,6 +17,7 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 import com.eventradar.R
+import com.google.android.gms.maps.model.LatLng
 import java.text.SimpleDateFormat
 
 sealed class AddEventResult {
@@ -48,6 +49,9 @@ class AddEventViewModel @Inject constructor(
     init {
         if (isEditMode) {
             loadEventForEditing(eventId!!)
+        }else{
+            val initialLocation = GeoPoint(latForCreate, lngForCreate)
+            _formState.update { it.copy(location = initialLocation) }
         }
     }
 
@@ -67,7 +71,8 @@ class AddEventViewModel @Inject constructor(
                         eventTime = event.eventTimestamp?.toDate()?.let { d -> timeFormat.format(d) } ?: "",
                         ageRestriction = event.ageRestriction > 0,
                         free = event.free,
-                        price = if (event.free) "" else event.price.toString()
+                        price = if (event.free) "" else event.price.toString(),
+                        location = event.location,
                     )
                 }
             }.onFailure {
@@ -117,6 +122,9 @@ class AddEventViewModel @Inject constructor(
             _formState.update { it.copy(price = price, priceError = null) }
         }
     }
+    fun onLocationChanged(latLng: LatLng) {
+        _formState.update { it.copy(location = GeoPoint(latLng.latitude, latLng.longitude)) }
+    }
     fun onSaveEvent() {
         viewModelScope.launch {
             if (validateForm()) {
@@ -141,8 +149,8 @@ class AddEventViewModel @Inject constructor(
                         eventTimestamp = combineDateAndTime(_formState.value.eventDate, _formState.value.eventTime),
                         ageRestriction = if (_formState.value.ageRestriction) 18 else 0,
                         free = _formState.value.free,
-                        price = if (_formState.value.free) 0.0 else _formState.value.price.toDoubleOrNull() ?: 0.0
-                        // Sva ostala polja (id, location, creatorId, itd.) ostaju ista kao u 'originalEvent'
+                        price = if (_formState.value.free) 0.0 else _formState.value.price.toDoubleOrNull() ?: 0.0,
+                        location = _formState.value.location!!,
                     )
 
                     // 3. Pošalji kompletan, ažuriran objekat na update
@@ -153,7 +161,6 @@ class AddEventViewModel @Inject constructor(
                     else _addEventResult.emit(AddEventResult.Error(result.exceptionOrNull()?.message ?: "Update failed."))
 
                 } else {
-                    // --- LOGIKA ZA CREATE (ostaje ista) ---
                     val currentUser = userRepository.getCurrentUser()
                     if (currentUser == null) {
                         _addEventResult.emit(AddEventResult.Error("User not found."))
@@ -164,7 +171,7 @@ class AddEventViewModel @Inject constructor(
                     val newEvent = createEventFromState().copy(
                         creatorId = currentUser.uid,
                         creatorName = "${currentUser.firstName} ${currentUser.lastName}",
-                        location = GeoPoint(latForCreate, lngForCreate)
+                        location = _formState.value.location!!,
                     )
 
                     val result = eventRepository.addEvent(newEvent)
