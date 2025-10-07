@@ -148,12 +148,12 @@ fun AddEventScreen(
         ) {
             Text(stringResource(R.string.free_event_label), style = MaterialTheme.typography.bodyLarge)
             Switch(
-                checked = formState.isFree,
+                checked = formState.free,
                 onCheckedChange = { addEventViewModel.onIsFreeChanged(it) }
             )
         }
 
-        AnimatedVisibility(visible = !formState.isFree) {
+        AnimatedVisibility(visible = !formState.free) {
             Column {
                 Spacer(modifier = Modifier.height(10.dp))
                 OutlinedTextField(

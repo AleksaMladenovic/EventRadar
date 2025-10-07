@@ -28,52 +28,80 @@ import com.google.android.gms.maps.model.LatLng
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EventDetailsScreen(
     viewModel: EventDetailsViewModel = hiltViewModel(),
     onNavigateToMap: (LatLng) -> Unit,
     onNavigateBack: () -> Unit,
     onCreatorClick: (String) -> Unit,
-) {
+    onNavigateToEditEvent: (String) -> Unit,
+    ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     // Kreiramo lokalnu, nepromenljivu kopiju
     val error = state.error
+    val isOwner = state.event?.let { viewModel.isCurrentUserOwner(it.creatorId) } ?: false
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            when {
-                state.isLoading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                    Text(
-                        text = stringResource(id = R.string.event_details_loading),
-                        modifier = Modifier.align(Alignment.Center).padding(top = 64.dp)
-                    )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(state.event?.name ?: "Event Details") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
                 }
-
-                error != null -> {
-                    Text(
-                        text = error,
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-
-                state.event != null -> {
-                    // Ako je sve u redu, prikaži detalje
-                    EventDetailsContent(event = state.event!!, onShowMap = onNavigateToMap, onCreatorClick = onCreatorClick)
+            )
+        },
+        floatingActionButton = {
+            // Prikazujemo FAB-ove samo ako je događaj uspešno učitan
+            if (state.event != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // Edit dugme se prikazuje samo ako je korisnik vlasnik
+                    if (isOwner) {
+                        FloatingActionButton(onClick = { onNavigateToEditEvent(state.event!!.id) }) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edit Event")
+                        }
+                    }
+                    // Show on Map dugme je uvek tu
+                    FloatingActionButton(
+                        onClick = { onNavigateToMap(LatLng(state.event!!.location.latitude, state.event!!.location.longitude)) }
+                    ) {
+                        Icon(Icons.Default.Map, contentDescription = "Show on Map")
+                    }
                 }
             }
         }
-
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            when {
+                state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                state.error != null -> Text(state.error!!, modifier = Modifier.align(Alignment.Center))
+                state.event != null -> {
+                    // Sada 'EventDetailsContent' nema Scaffold i prima samo 'event' i 'onCreatorClick'
+                    EventDetailsContent(
+                        event = state.event!!,
+                        onCreatorClick = onCreatorClick
+                    )
+                }
+            }
+        }
+    }
 }
+
+
 
 @Composable
 fun EventDetailsContent(
     event: Event,
-    onShowMap: (LatLng) -> Unit,
     onCreatorClick: (String)-> Unit
 ) {
     val dateFormatter = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault())
-    val latLng = LatLng(event.location.latitude, event.location.longitude)
+    println("DETAILS_DEBUG: Displaying event: $event")
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -108,7 +136,7 @@ fun EventDetailsContent(
             }
             DetailRow(
                 icon = Icons.Default.AttachMoney,
-                text = if (event.isFree)
+                text = if (event.free)
                     stringResource(id = R.string.event_price_free)
                 else
                     stringResource(id = R.string.event_price_format, event.price)
@@ -131,18 +159,6 @@ fun EventDetailsContent(
             Text(text = event.description, style = MaterialTheme.typography.bodyLarge)
         }
 
-        // FloatingActionButton dole desno
-        FloatingActionButton(
-            onClick = { onShowMap(latLng) },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Map,
-                contentDescription = stringResource(R.string.show_on_map)
-            )
-        }
     }
 }
 

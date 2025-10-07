@@ -36,7 +36,7 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
             MapScreen(
                 arguments = backStackEntry.arguments,
                 onNavigateToAddEvent = { latLng ->
-                    homeNavController.navigate("add_event/${latLng.latitude}/${latLng.longitude}")
+                    homeNavController.navigate("add_event?lat=${latLng.latitude}&lng=${latLng.longitude}")
                 },
                 onNavigateToEventDetails = { eventId ->
                     homeNavController.navigate("event_details/$eventId")
@@ -79,8 +79,18 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
         composable(
             route = Routes.ADD_EVENT_SCREEN,
             arguments = listOf(
-                navArgument("lat") { type = NavType.StringType },
-                navArgument("lng") { type = NavType.StringType }
+                navArgument("eventId") {
+                    type = NavType.StringType
+                    nullable = true
+                },
+                navArgument("lat") {
+                    type = NavType.StringType
+                    nullable = true
+                },
+                navArgument("lng") {
+                    type = NavType.StringType
+                    nullable = true
+                }
             )
         ) {
             AddEventScreen(
@@ -99,9 +109,7 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
         ) {
             EventDetailsScreen(
                 onNavigateToMap = { latLng ->
-                    // Sada samo pozivamo navigaciju na mapu sa argumentima
                     homeNavController.navigate("map?lat=${latLng.latitude}&lng=${latLng.longitude}") {
-                        // Vraća nas na mapu i osigurava da imamo samo jednu instancu mape
                         popUpTo(Routes.MAP_SCREEN) { inclusive = true }
                     }
                 },
@@ -110,6 +118,9 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
                 },
                 onCreatorClick = { userId ->
                     homeNavController.navigate("public_profile/$userId")
+                },
+                onNavigateToEditEvent = { eventId ->
+                    homeNavController.navigate("add_event?eventId=$eventId")
                 }
             )
         }

@@ -12,7 +12,7 @@ data class AddEventFormState(
     val eventDate: Date? = null,
     val eventTime: String = "", // npr. "19:30"
     val ageRestriction: Boolean = false, // Jednostavan switch
-    val isFree: Boolean = true,
+    val free: Boolean = true,
     val price: String = "",
     // URI slike koju je korisnik izabrao (za kasnije)
     // val eventImageUri: Uri? = null,

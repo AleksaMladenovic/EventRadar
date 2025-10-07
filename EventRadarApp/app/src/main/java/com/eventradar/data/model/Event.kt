@@ -17,7 +17,7 @@ data class Event(
     val eventTimestamp: Timestamp? = null,
     val ageRestriction: Int = 0,
     val price: Double = 0.0,
-    val isFree: Boolean = true,
+    val free: Boolean = true,
     val eventImageUrl: String? = null,
 
     @get:PropertyName("l") @set:PropertyName("l")

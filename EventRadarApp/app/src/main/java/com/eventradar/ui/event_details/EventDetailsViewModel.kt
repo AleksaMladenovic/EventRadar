@@ -3,6 +3,7 @@ package com.eventradar.ui.event_details
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eventradar.data.repository.AuthRepository
 import com.eventradar.data.repository.EventRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class EventDetailsViewModel @Inject constructor(
     private val eventRepository: EventRepository,
+    private val authRepository: AuthRepository,
     savedStateHandle: SavedStateHandle // Za primanje eventId iz navigacije
 ) : ViewModel() {
 
@@ -48,4 +50,8 @@ class EventDetailsViewModel @Inject constructor(
             }
             .launchIn(viewModelScope) // Pokreni sakupljanje (collecting) u ViewModelScope
     }
+    fun isCurrentUserOwner(creatorId: String): Boolean {
+        return authRepository.getCurrentUserId() == creatorId
+    }
+
 }

@@ -17,6 +17,7 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 import com.eventradar.R
+import java.text.SimpleDateFormat
 
 sealed class AddEventResult {
     object Success : AddEventResult()
@@ -27,7 +28,7 @@ sealed class AddEventResult {
 class AddEventViewModel @Inject constructor(
     private val eventRepository: EventRepository,
     private val userRepository: UserRepository,
-    private val savedStateHandle: SavedStateHandle // Za primanje argumenata iz navigacije
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _formState = MutableStateFlow(AddEventFormState())
@@ -36,10 +37,44 @@ class AddEventViewModel @Inject constructor(
     private val _addEventResult = MutableSharedFlow<AddEventResult>()
     val addEventResult = _addEventResult.asSharedFlow()
 
-    // Dobavljamo koordinate koje su prosleđene preko navigacije
-    val latitude: Double = savedStateHandle.get<String>("lat")?.toDoubleOrNull() ?: 0.0
-    val longitude: Double = savedStateHandle.get<String>("lng")?.toDoubleOrNull() ?: 0.0
+    // Proveravamo da li smo u Edit modu
+    private val eventId: String? = savedStateHandle.get<String>("eventId")
+    private val isEditMode = eventId != null
 
+    // Koordinate za Create mod
+    private val latForCreate: Double = savedStateHandle.get<String>("lat")?.toDoubleOrNull() ?: 0.0
+    private val lngForCreate: Double = savedStateHandle.get<String>("lng")?.toDoubleOrNull() ?: 0.0
+
+    init {
+        if (isEditMode) {
+            loadEventForEditing(eventId!!)
+        }
+    }
+
+
+    private fun loadEventForEditing(id: String) {
+        viewModelScope.launch {
+            _formState.update { it.copy(isLoading = true) }
+            eventRepository.getEventById(id).first().onSuccess { event -> // .first() da uzmemo samo jednu vrednost
+                val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+                _formState.update {
+                    it.copy(
+                        isLoading = false,
+                        name = event.name,
+                        description = event.description,
+                        category = EventCategory.fromString(event.category),
+                        eventDate = event.eventTimestamp?.toDate(),
+                        eventTime = event.eventTimestamp?.toDate()?.let { d -> timeFormat.format(d) } ?: "",
+                        ageRestriction = event.ageRestriction > 0,
+                        free = event.free,
+                        price = if (event.free) "" else event.price.toString()
+                    )
+                }
+            }.onFailure {
+
+            }
+        }
+    }
     // --- Funkcije za ažuriranje stanja forme ---
     fun onNameChange(name: String) {
         _formState.update { it.copy(name = name, nameError = null) }
@@ -67,12 +102,12 @@ class AddEventViewModel @Inject constructor(
         _formState.update { it.copy(ageRestriction = isRestricted) }
     }
 
-    fun onIsFreeChanged(isFree: Boolean) {
+    fun onIsFreeChanged(free: Boolean) {
         // Ako je događaj besplatan, obriši cenu i grešku za cenu
-        if (isFree) {
-            _formState.update { it.copy(isFree = true, price = "", priceError = null) }
+        if (free) {
+            _formState.update { it.copy(free= true, price = "", priceError = null) }
         } else {
-            _formState.update { it.copy(isFree = false) }
+            _formState.update { it.copy(free = false) }
         }
     }
 
@@ -87,44 +122,75 @@ class AddEventViewModel @Inject constructor(
             if (validateForm()) {
                 _formState.update { it.copy(isLoading = true) }
 
-                val state = _formState.value
-                val currentUser = userRepository.getCurrentUser()
+                if (isEditMode) {
 
-                if (currentUser == null) {
-                    _addEventResult.emit(AddEventResult.Error("User not found. Please log in again."))
+                    // 1. Dobavi originalni događaj iz baze
+                    val originalEventResult = eventRepository.getEventById(eventId!!).first()
+                    if (originalEventResult.isFailure) {
+                        _addEventResult.emit(AddEventResult.Error("Failed to fetch original event for update."))
+                        _formState.update { it.copy(isLoading = false) }
+                        return@launch
+                    }
+                    val originalEvent = originalEventResult.getOrNull()!!
+
+                    // 2. Kreiraj NOVI objekat tako što kopiraš STARI i prepišeš samo izmenjena polja
+                    val updatedEvent = originalEvent.copy(
+                        name = _formState.value.name.trim(),
+                        description = _formState.value.description.trim(),
+                        category = _formState.value.category.name,
+                        eventTimestamp = combineDateAndTime(_formState.value.eventDate, _formState.value.eventTime),
+                        ageRestriction = if (_formState.value.ageRestriction) 18 else 0,
+                        free = _formState.value.free,
+                        price = if (_formState.value.free) 0.0 else _formState.value.price.toDoubleOrNull() ?: 0.0
+                        // Sva ostala polja (id, location, creatorId, itd.) ostaju ista kao u 'originalEvent'
+                    )
+
+                    // 3. Pošalji kompletan, ažuriran objekat na update
+                    val result = eventRepository.updateEvent(updatedEvent)
+
                     _formState.update { it.copy(isLoading = false) }
-                    return@launch
-                }
+                    if (result.isSuccess) _addEventResult.emit(AddEventResult.Success)
+                    else _addEventResult.emit(AddEventResult.Error(result.exceptionOrNull()?.message ?: "Update failed."))
 
-                // Spajanje datuma i vremena u jedan Timestamp
-                val eventTimestamp = combineDateAndTime(state.eventDate, state.eventTime)
+                } else {
+                    // --- LOGIKA ZA CREATE (ostaje ista) ---
+                    val currentUser = userRepository.getCurrentUser()
+                    if (currentUser == null) {
+                        _addEventResult.emit(AddEventResult.Error("User not found."))
+                        _formState.update { it.copy(isLoading = false) }
+                        return@launch
+                    }
 
-                val newEvent = Event(
-                    // id se ne postavlja, Firestore će ga generisati
-                    name = state.name.trim(),
-                    description = state.description.trim(),
-                    category = state.category.name,
-                    location = GeoPoint(latitude, longitude),
-                    creatorId = currentUser.uid,
-                    creatorName = "${currentUser.firstName} ${currentUser.lastName}",
+                    val newEvent = createEventFromState().copy(
+                        creatorId = currentUser.uid,
+                        creatorName = "${currentUser.firstName} ${currentUser.lastName}",
+                        location = GeoPoint(latForCreate, lngForCreate)
+                    )
 
-                    eventTimestamp = eventTimestamp,
-                    ageRestriction = if (state.ageRestriction) 18 else 0,
-                    isFree = state.isFree,
-                    price = if (state.isFree) 0.0 else state.price.toDoubleOrNull() ?: 0.0
-                    // eventImageUrl ćemo dodati kasnije
-                )
+                    val result = eventRepository.addEvent(newEvent)
+                    _formState.update { it.copy(isLoading = false) }
 
-                val result = eventRepository.addEvent(newEvent)
-                _formState.update { it.copy(isLoading = false) }
-
-                result.onSuccess {
-                    _addEventResult.emit(AddEventResult.Success)
-                }.onFailure { exception ->
-                    _addEventResult.emit(AddEventResult.Error(exception.message ?: "An error occurred."))
+                    if (result.isSuccess) _addEventResult.emit(AddEventResult.Success)
+                    else _addEventResult.emit(AddEventResult.Error(result.exceptionOrNull()?.message ?: "Create failed."))
                 }
             }
         }
+    }
+
+
+    // Pomoćna funkcija da se izbegne dupliranje koda
+    private fun createEventFromState(): Event {
+        val state = _formState.value
+        val eventTimestamp = combineDateAndTime(state.eventDate, state.eventTime)
+        return Event(
+            name = state.name.trim(),
+            description = state.description.trim(),
+            category = state.category.name,
+            eventTimestamp = eventTimestamp,
+            ageRestriction = if (state.ageRestriction) 18 else 0,
+            free = state.free,
+            price = if (state.free) 0.0 else state.price.toDoubleOrNull() ?: 0.0
+        )
     }
 
     private fun validateForm(): Boolean {
@@ -134,7 +200,7 @@ class AddEventViewModel @Inject constructor(
         val descriptionError = if (state.description.isBlank()) R.string.error_field_required else null
         val dateError = if (state.eventDate == null) R.string.error_field_required else null
         val timeError = if (state.eventTime.isBlank()) R.string.error_field_required else null
-        val priceError = if (!state.isFree && (state.price.isBlank() || state.price.toDoubleOrNull() == null)) {
+        val priceError = if (!state.free && (state.price.isBlank() || state.price.toDoubleOrNull() == null)) {
             R.string.error_invalid_price
         } else null
 

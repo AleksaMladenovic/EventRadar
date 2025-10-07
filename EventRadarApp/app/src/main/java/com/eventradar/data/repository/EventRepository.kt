@@ -4,11 +4,13 @@ import android.location.Location
 import com.eventradar.data.model.Event
 import com.eventradar.data.model.EventCategory
 import com.eventradar.data.model.EventFilters
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,12 +44,11 @@ class EventRepository @Inject constructor(
         return try {
             val documentRef = firestore.collection("events").document()
 
-            // --- ISPRAVNA LOGIKA ZA ČEKANJE SA CompletionListener ---
             suspendCancellableCoroutine<Unit> { continuation ->
                 geoFirestore.setLocation(
                     documentRef.id,
                     event.location,
-                    object : GeoFirestore.CompletionCallback { // <-- ISPRAVAN TIP
+                    object : GeoFirestore.CompletionCallback {
                         override fun onComplete(exception: Exception?) {
                             if (exception == null) {
                                 // Uspešno, nastavi korutinu
@@ -68,14 +69,14 @@ class EventRepository @Inject constructor(
                 "name" to event.name,
                 "description" to event.description,
                 "category" to event.category,
-                "createdAt" to event.createdAt,
+                "createdAt" to Timestamp.now(),
                 "creatorId" to event.creatorId,
                 "creatorName" to event.creatorName,
                 "eventTimestamp" to event.eventTimestamp,
                 "ageRestriction" to event.ageRestriction,
                 "price" to event.price,
-                "isFree" to event.isFree,
-                "eventImageUrl" to event.eventImageUrl
+                "free" to event.free,
+                "eventImageUrl" to event.eventImageUrl,
             )
 
             // Koristimo 'update' da dodamo ostatak podataka bez pregaženja 'g' i 'l'
@@ -249,5 +250,17 @@ class EventRepository @Inject constructor(
                 }
             }
         awaitClose { listener.remove() }
+    }
+
+
+    suspend fun updateEvent(event: Event): Result<Unit> {
+        return try {
+            firestore.collection("events").document(event.id)
+                .set(event, SetOptions.merge())
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

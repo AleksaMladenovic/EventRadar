@@ -49,4 +49,8 @@ class AuthRepository @Inject constructor(
     fun signOut() {
         auth.signOut()
     }
+
+    fun getCurrentUserId():String?{
+        return auth.currentUser?.uid;
+    }
 }
