@@ -1,5 +1,6 @@
 package com.eventradar.ui.event_details
 
+import com.eventradar.data.model.CommentWithAuthor
 import com.eventradar.data.model.Event
 
 data class EventDetailsState(
@@ -7,4 +8,5 @@ data class EventDetailsState(
     val isLoading: Boolean = true,
     val error: String? = null,
     val isCurrentUserAttending: Boolean = false,
+    val comments: List<CommentWithAuthor> = emptyList(),
 )

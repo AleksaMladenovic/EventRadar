@@ -3,14 +3,21 @@ package com.eventradar.ui.event_details
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eventradar.data.model.Comment
+import com.eventradar.data.model.CommentWithAuthor
 import com.eventradar.data.repository.AuthRepository
+import com.eventradar.data.repository.CommentRepository
 import com.eventradar.data.repository.EventRepository
+import com.eventradar.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -21,7 +28,9 @@ import javax.inject.Inject
 class EventDetailsViewModel @Inject constructor(
     private val eventRepository: EventRepository,
     private val authRepository: AuthRepository,
-    savedStateHandle: SavedStateHandle // Za primanje eventId iz navigacije
+    private val userRepository: UserRepository,
+    private val commentRepository: CommentRepository,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EventDetailsState())
@@ -31,13 +40,13 @@ class EventDetailsViewModel @Inject constructor(
     val event = _event.asSharedFlow()
 
     private val currentUserId: String? = authRepository.getCurrentUserId()
+    val eventId: String? = savedStateHandle.get("eventId")
 
     init {
         // Čitamo 'eventId' iz argumenata rute
-        val eventId: String? = savedStateHandle.get("eventId")
-
         if (eventId != null) {
             getEventDetails(eventId)
+            getComments(eventId)
         } else {
             // Slučaj ako ID nije prosleđen - prikaži grešku
             _state.update { it.copy(isLoading = false, error = "Event ID not provided.") }
@@ -99,6 +108,35 @@ class EventDetailsViewModel @Inject constructor(
         }
     }
 
+    private fun getComments(eventId: String) {
+        viewModelScope.launch {
+            commentRepository.getCommentsForEvent(eventId).collect { result ->
+                result.onSuccess { comments ->
+                    // Dobili smo listu "sirovih" komentara
+                    val commentsWithAuthors = comments.map { comment ->
+                        // Za svaki komentar, JEDNOKRATNO povuci podatke o autoru
+                        val authorResult = userRepository.getUserById(comment.authorId)
+                        CommentWithAuthor(
+                            comment = comment,
+                            author = authorResult.getOrNull()
+                        )
+                    }
+                    _state.update { it.copy(comments = commentsWithAuthors) }
+                }
+            }
+        }
+    }
+
+    fun onAddComment(text: String) {
+        viewModelScope.launch {
+            if (eventId != null) {
+                commentRepository.addComment(eventId, text).onFailure {
+                    // TODO: Prikazati grešku korisniku
+                    println("Failed to add comment: ${it.message}")
+                }
+            }
+        }
+    }
 
 }
 

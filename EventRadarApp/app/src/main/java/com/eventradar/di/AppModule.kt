@@ -2,6 +2,7 @@ package com.eventradar.di
 
 import com.eventradar.data.repository.AuthRepository
 import com.eventradar.data.repository.CloudinaryRepository
+import com.eventradar.data.repository.CommentRepository
 import com.eventradar.data.repository.EventRepository
 import com.eventradar.data.repository.FilterRepository
 import com.eventradar.data.repository.LocationRepository
@@ -72,5 +73,14 @@ object AppModule {
     @Singleton
     fun provideGeoFirestore(@Named("eventsCollection") eventsCollection: CollectionReference): GeoFirestore {
         return GeoFirestore(eventsCollection)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCommentRepository(
+        firestore: FirebaseFirestore,
+        auth: FirebaseAuth
+    ): CommentRepository {
+        return CommentRepository(firestore, auth)
     }
 }

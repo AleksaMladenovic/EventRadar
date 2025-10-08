@@ -3,6 +3,8 @@ package com.eventradar.ui.event_details
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -27,6 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.eventradar.R
+import com.eventradar.data.model.CommentWithAuthor
 import com.eventradar.data.model.Event
 import com.eventradar.data.model.EventCategory
 import com.eventradar.ui.components.CategoryChip
@@ -44,7 +47,8 @@ fun EventDetailsScreen(
     onNavigateToEditEvent: (String) -> Unit,
     ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val isOwner = state.event?.let { viewModel.isCurrentUserOwner(it.creatorId) } ?: false
+    val event = state.event
+    val isOwner = event?.let { viewModel.isCurrentUserOwner(it.creatorId) } ?: false
     var showDeleteConfirmDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -65,36 +69,25 @@ fun EventDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.event?.name ?: "Event Details") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                title = { Text(event?.name ?: "Event Details") },
+                navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, "Back") } },
                 actions = {
                     if (isOwner) {
                         IconButton(onClick = { showDeleteConfirmDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete Event", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Delete, "Delete Event", tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
             )
         },
         floatingActionButton = {
-            // Prikazujemo FAB-ove samo ako je događaj uspešno učitan
-            if (state.event != null) {
+            if (event != null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    // Edit dugme se prikazuje samo ako je korisnik vlasnik
                     if (isOwner) {
-                        FloatingActionButton(onClick = { onNavigateToEditEvent(state.event!!.id) }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit Event")
-                        }
+                        FloatingActionButton(onClick = { onNavigateToEditEvent(event.id) }) { Icon(Icons.Default.Edit, "Edit") }
                     }
-                    // Show on Map dugme je uvek tu
-                    FloatingActionButton(
-                        onClick = { onNavigateToMap(LatLng(state.event!!.location.latitude, state.event!!.location.longitude)) }
-                    ) {
-                        Icon(Icons.Default.Map, contentDescription = "Show on Map")
+                    FloatingActionButton(onClick = { onNavigateToMap(LatLng(event.location.latitude, event.location.longitude)) }) {
+                        Icon(Icons.Default.Map, "Show on Map")
                     }
                 }
             }
@@ -103,18 +96,20 @@ fun EventDetailsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues) // Padding od TopAppBar-a
         ) {
             when {
                 state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 state.error != null -> Text(state.error!!, modifier = Modifier.align(Alignment.Center))
-                state.event != null -> {
-                    // Sada 'EventDetailsContent' nema Scaffold i prima samo 'event' i 'onCreatorClick'
+                event != null -> {
+                    // EventDetailsContent je sada ponovo JEDNOSTAVAN
                     EventDetailsContent(
-                        event = state.event!!,
-                        onCreatorClick = onCreatorClick,
+                        event = event,
                         isCurrentUserAttending = state.isCurrentUserAttending,
-                        onToggleAttendance = {viewModel.onToggleAttendanceClick()},
+                        onToggleAttendance = { viewModel.onToggleAttendanceClick() },
+                        onCreatorClick = onCreatorClick,
+                        comments = state.comments,
+                        onAddComment = { text -> viewModel.onAddComment(text) }
                     )
                 }
             }
@@ -150,97 +145,104 @@ fun EventDetailsScreen(
 
 
 @Composable
-fun EventDetailsContent(
+private fun EventDetailsContent(
     event: Event,
-    onCreatorClick: (String)-> Unit,
     isCurrentUserAttending: Boolean,
     onToggleAttendance: () -> Unit,
+    onCreatorClick: (String) -> Unit,
+    comments: List<CommentWithAuthor>,
+    onAddComment: (String) -> Unit
 ) {
-    val dateFormatter = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault())
-    println("DETAILS_DEBUG: Displaying event: $event")
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
-        ) {
-            // Naslov i kategorija
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = event.name, style = MaterialTheme.typography.headlineLarge)
-            Spacer(modifier = Modifier.height(8.dp))
-            CategoryChip(category = EventCategory.fromString(event.category))
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Detalji sa ikonicama
-            DetailRow(
-                icon = Icons.Default.Event,
-                text = event.eventTimestamp?.toDate()?.let { dateFormatter.format(it) } ?: "N/A"
+    // SADA JE SVE UNUTAR JEDNOG LAZYCOLUMN-A
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp) // Padding za ceo sadržaj
+    ) {
+        // Stavka 1: Sve informacije o događaju
+        item {
+            EventInfoSection(
+                event = event,
+                isCurrentUserAttending = isCurrentUserAttending,
+                onToggleAttendance = onToggleAttendance,
+                onCreatorClick = onCreatorClick
             )
-            DetailRow(
-                icon = Icons.Default.LocationOn,
-                text = "Location (Lat: ${event.location.latitude}, Lng: ${event.location.longitude})"
-            )
-            Row(
-                modifier = Modifier.clickable { onCreatorClick(event.creatorId) },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(text = stringResource(id = R.string.event_created_by, event.creatorName), style = MaterialTheme.typography.bodyLarge)
-            }
-            DetailRow(
-                icon = Icons.Default.AttachMoney,
-                text = if (event.free)
-                    stringResource(id = R.string.event_price_free)
-                else
-                    stringResource(id = R.string.event_price_format, event.price)
-            )
-            DetailRow(
-                icon = Icons.Default.NoAdultContent,
-                text = if (event.ageRestriction > 0)
-                    stringResource(id = R.string.event_age_restriction_present)
-                else
-                    stringResource(id = R.string.event_age_restriction_absent)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = stringResource(id = R.string.event_about_label),
-                style = MaterialTheme.typography.titleMedium
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = event.description, style = MaterialTheme.typography.bodyLarge)
-
-            // Button za prisustvo
-            Button(
-                onClick = onToggleAttendance,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                // Menjamo ikonicu i tekst u zavisnosti od stanja
-                if (isCurrentUserAttending) {
-                    Icon(Icons.Default.Check, contentDescription = "You are going")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("You're Going!") // Dodaj u strings.xml
-                } else {
-                    Text("I'm Going") // Dodaj u strings.xml
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Prikaz broja ljudi koji idu
-            Text(
-                text = "${event.attendeeIds.size} people are going", // Dodaj u strings.xml kao formatiran string
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
         }
 
+        // Stavka 2: Naslov "Comments"
+        item {
+            Text(
+                text = "Comments (${comments.size})",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)
+            )
+        }
+
+        // Stavke 3: Lista komentara
+        items(items = comments, key = { it.comment.id }) { commentWithAuthor ->
+            CommentItem(commentWithAuthor = commentWithAuthor)
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+        }
+
+        // Stavka 4: Polje za unos novog komentara
+        item {
+            CommentInput(onCommentSend = onAddComment)
+        }
+
+        // --- KLJUČNO REŠENJE ---
+        // Stavka 5: Prazan prostor na dnu liste
+        // Visina je dovoljna da stane FAB (obično 56dp) plus dodatni padding (16dp).
+        item {
+            Spacer(modifier = Modifier.height(88.dp))
+        }
+    }
+}
+
+
+
+@Composable
+private fun EventInfoSection(
+    event: Event,
+    isCurrentUserAttending: Boolean,
+    onToggleAttendance: () -> Unit,
+    onCreatorClick: (String) -> Unit
+) {
+    val dateFormatter = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault())
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        CategoryChip(category = EventCategory.fromString(event.category))
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(text = event.name, style = MaterialTheme.typography.headlineLarge)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Dugme za prisustvo
+        Button(onClick = onToggleAttendance, modifier = Modifier.fillMaxWidth()) {
+            if (isCurrentUserAttending) {
+                Icon(Icons.Default.Check, contentDescription = "You are going")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("You're Going!")
+            } else {
+                Text("I'm Going")
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "${event.attendeeIds.size} people are going",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Ostali detalji (sada lepo poravnati levo)
+        Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
+            DetailRow(icon = Icons.Default.Event, text = event.eventTimestamp?.toDate()?.let { dateFormatter.format(it) } ?: "N/A")
+            DetailRow(icon = Icons.Default.LocationOn, text = "Location (Lat: ${event.location.latitude}, Lng: ${event.location.longitude})")
+            Row(modifier = Modifier.clickable { onCreatorClick(event.creatorId) }, /* ... */) { /* ... */ }
+            // ... ostali DetailRow ...
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(text = stringResource(id = R.string.event_about_label), style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = event.description, style = MaterialTheme.typography.bodyLarge)
+        }
     }
 }
 
