@@ -51,8 +51,9 @@ object AppModule {
         filterRepository: FilterRepository,
         locationRepository: LocationRepository,
         authRepository: AuthRepository,
+        userRepository: UserRepository
     ): EventRepository {
-        return EventRepository(firestore, geoFirestore, filterRepository, locationRepository, authRepository)
+        return EventRepository(firestore, geoFirestore, filterRepository, locationRepository, authRepository, userRepository)
     }
 
     @Provides
@@ -79,8 +80,9 @@ object AppModule {
     @Singleton
     fun provideCommentRepository(
         firestore: FirebaseFirestore,
-        auth: FirebaseAuth
+        auth: FirebaseAuth,
+        userRepository: UserRepository
     ): CommentRepository {
-        return CommentRepository(firestore, auth)
+        return CommentRepository(firestore, auth, userRepository)
     }
 }

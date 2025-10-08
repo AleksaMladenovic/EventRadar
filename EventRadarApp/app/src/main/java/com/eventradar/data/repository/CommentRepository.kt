@@ -15,7 +15,8 @@ import javax.inject.Singleton
 @Singleton
 class CommentRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth
+    private val auth: FirebaseAuth,
+    private val userRepository: UserRepository
 ) {
 
     // Funkcija za dodavanje novog komentara
@@ -37,6 +38,7 @@ class CommentRepository @Inject constructor(
                 text = text
             )
             documentRef.set(newComment).await()
+            userRepository.incrementUserPoints(currentUserId, 2L)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

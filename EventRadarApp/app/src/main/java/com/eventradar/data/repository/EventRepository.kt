@@ -41,6 +41,7 @@ class EventRepository @Inject constructor(
     private val filterRepository: FilterRepository,
     private val locationRepository: LocationRepository,
     private val authRepository: AuthRepository,
+    private val userRepository: UserRepository
 ) {
     suspend fun addEvent(event: Event): Result<Unit> {
         return try {
@@ -83,7 +84,9 @@ class EventRepository @Inject constructor(
 
             // Koristimo 'update' da dodamo ostatak podataka bez pregaženja 'g' i 'l'
             documentRef.update(eventData).await()
-
+            if (event.creatorId.isNotBlank()) {
+                userRepository.incrementUserPoints(event.creatorId, 10L) // +10 poena
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -359,7 +362,8 @@ class EventRepository @Inject constructor(
                     newRatingSum = currentRatingSum + newRating
                     newRatingCount = currentRatingCount + 1
 
-
+                    val userRef = firestore.collection("users").document(userId)
+                    transaction.update(userRef, "points", FieldValue.increment(3L))
                 }
 
                 // Ažuriraj mapu sa novom ocenom korisnika
