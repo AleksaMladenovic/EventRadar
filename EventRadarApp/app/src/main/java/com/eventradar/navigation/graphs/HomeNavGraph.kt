@@ -59,7 +59,7 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
         composable(
             route = Routes.USER_EVENTS_SCREEN,
             arguments = listOf(
-                navArgument("userId") { type = NavType.StringType }
+                navArgument("createdByUserId") { type = NavType.StringType }
             )
         ) {
             EventsListScreen(
@@ -75,6 +75,9 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
             ProfileScreen(
                 onNavigateToMyEvents = { currentUserId->
                     homeNavController.navigate("user_events/$currentUserId")
+                },
+                onNavigateToAttendingEvents = {currentUserId ->
+                    homeNavController.navigate("attending_events/${currentUserId}")
                 }
             )
         }
@@ -169,6 +172,18 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
             )
         }
 
+        composable(
+            route = Routes.ATTENDING_EVENTS_SCREEN,
+            arguments = listOf(
+                navArgument("attendingUserId") { type = NavType.StringType }
+            )
+        ) {
+            EventsListScreen(
+                onNavigateToEventDetails = { eventId ->
+                    homeNavController.navigate("event_details/$eventId")
+                }
+            )
+        }
 
     }
 }

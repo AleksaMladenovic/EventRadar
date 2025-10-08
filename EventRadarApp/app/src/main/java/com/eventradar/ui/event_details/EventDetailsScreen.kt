@@ -112,7 +112,9 @@ fun EventDetailsScreen(
                     // Sada 'EventDetailsContent' nema Scaffold i prima samo 'event' i 'onCreatorClick'
                     EventDetailsContent(
                         event = state.event!!,
-                        onCreatorClick = onCreatorClick
+                        onCreatorClick = onCreatorClick,
+                        isCurrentUserAttending = state.isCurrentUserAttending,
+                        onToggleAttendance = {viewModel.onToggleAttendanceClick()},
                     )
                 }
             }
@@ -150,7 +152,9 @@ fun EventDetailsScreen(
 @Composable
 fun EventDetailsContent(
     event: Event,
-    onCreatorClick: (String)-> Unit
+    onCreatorClick: (String)-> Unit,
+    isCurrentUserAttending: Boolean,
+    onToggleAttendance: () -> Unit,
 ) {
     val dateFormatter = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault())
     println("DETAILS_DEBUG: Displaying event: $event")
@@ -209,6 +213,32 @@ fun EventDetailsContent(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = event.description, style = MaterialTheme.typography.bodyLarge)
+
+            // Button za prisustvo
+            Button(
+                onClick = onToggleAttendance,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Menjamo ikonicu i tekst u zavisnosti od stanja
+                if (isCurrentUserAttending) {
+                    Icon(Icons.Default.Check, contentDescription = "You are going")
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("You're Going!") // Dodaj u strings.xml
+                } else {
+                    Text("I'm Going") // Dodaj u strings.xml
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Prikaz broja ljudi koji idu
+            Text(
+                text = "${event.attendeeIds.size} people are going", // Dodaj u strings.xml kao formatiran string
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
     }

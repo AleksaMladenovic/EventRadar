@@ -24,8 +24,9 @@ data class Event(
     var location: GeoPoint = GeoPoint(0.0, 0.0),
 
     @get:PropertyName("g") @set:PropertyName("g")
-    var geohash: String? = null
+    var geohash: String? = null,
 
+    val attendeeIds: List<String> = emptyList(),
 ){
     constructor() : this(
         "",
@@ -41,6 +42,7 @@ data class Event(
         true,
         null,
         GeoPoint(0.0, 0.0),
-        null)
+        null,
+        emptyList<String>())
 }
 

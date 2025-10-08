@@ -6,6 +6,7 @@ import com.eventradar.data.model.EventCategory
 import com.eventradar.data.model.EventFilters
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldPath
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ListenerRegistration
@@ -23,13 +24,11 @@ import org.imperiumlabs.geofirestore.GeoFirestore
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import org.imperiumlabs.geofirestore.GeoQuery
 import org.imperiumlabs.geofirestore.listeners.GeoQueryEventListener
+import kotlin.String
 import kotlin.coroutines.resume
 
 @Singleton
@@ -89,7 +88,10 @@ class EventRepository @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun getFilteredEvents(userId: String? = null): Flow<Result<List<Event>>> {
+    fun getFilteredEvents(
+        createdByUserId: String? = null,
+        attendingUserId: String? = null,
+    ): Flow<Result<List<Event>>> {
         val locationFlow = locationRepository.getLocationUpdates()
             .distinctUntilChanged { old, new -> old.distanceTo(new) < 100f }
 
@@ -97,19 +99,26 @@ class EventRepository @Inject constructor(
             if (filters.radiusInKm != null) {
                 locationFlow.flatMapLatest { location ->
                     println("FILTER_DEBUG: Radius filter is active. Using GEO QUERY.")
-                    createGeoQueryFlow(filters, location, userId)
+                    createGeoQueryFlow(filters, location, createdByUserId, attendingUserId)
                 }
             } else {
                 println("FILTER_DEBUG: Radius filter is NOT active. Using NORMAL QUERY.")
-                createNormalQueryFlow(filters, userId)
+                createNormalQueryFlow(filters, createdByUserId, attendingUserId)
             }
         }
     }
 
-    private fun createNormalQueryFlow(filters: EventFilters, userId: String? = null): Flow<Result<List<Event>>> = callbackFlow {
+    private fun createNormalQueryFlow(
+        filters: EventFilters,
+        createdByUserId: String? = null,
+        attendingUserId: String? = null,
+        ): Flow<Result<List<Event>>> = callbackFlow {
         var query: Query = firestore.collection("events")
-        if (!userId.isNullOrBlank()) {
-            query = query.whereEqualTo("creatorId", userId)
+        if (!createdByUserId.isNullOrBlank()) {
+            query = query.whereEqualTo("creatorId", createdByUserId)
+        }
+        if (!attendingUserId.isNullOrBlank()) {
+            query = query.whereArrayContains("attendeeIds", attendingUserId)
         }
         if (filters.categories.isNotEmpty()) {
             query = query.whereIn("category", filters.categories.map { it.name })
@@ -131,7 +140,12 @@ class EventRepository @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun createGeoQueryFlow(filters: EventFilters, location: Location, userId: String? = null): Flow<Result<List<Event>>> = callbackFlow {
+    private fun createGeoQueryFlow(
+        filters: EventFilters,
+        location: Location,
+        createdByUserId: String? = null,
+        attendingUserId: String? = null,
+    ): Flow<Result<List<Event>>> = callbackFlow {
         val geoQuery: GeoQuery = geoFirestore.queryAtLocation(
             GeoPoint(location.latitude, location.longitude),
             filters.radiusInKm!!
@@ -162,7 +176,7 @@ class EventRepository @Inject constructor(
                     if (snapshot != null) {
                         val events = snapshot.toObjects<Event>()
                         val filteredEvents = events.filter { event ->
-                            matchesClientSideFilters(event, filters, userId)
+                            matchesClientSideFilters(event, filters, createdByUserId, attendingUserId)
                         }
                         val sortedList = filteredEvents.sortedBy { it.eventTimestamp }
                         trySend(Result.success(sortedList))
@@ -204,7 +218,12 @@ class EventRepository @Inject constructor(
     }
 
 
-    private fun matchesClientSideFilters(event: Event, filters: EventFilters,userId: String? = null): Boolean {
+    private fun matchesClientSideFilters(
+        event: Event,
+        filters: EventFilters,
+        createdByUserId: String? = null,
+        attendingUserId: String? = null,
+    ): Boolean {
         val categoryMatch = filters.categories.isEmpty() || EventCategory.fromString(event.category) in filters.categories
 
         val dateMatch = event.eventTimestamp?.toDate()?.let { eventDate ->
@@ -213,9 +232,9 @@ class EventRepository @Inject constructor(
             startOk && endOk
         } ?: (filters.startDate == null && filters.endDate == null)
 
-        val userMatch = userId.isNullOrBlank() || event.creatorId == userId
-
-        return categoryMatch && dateMatch && userMatch
+        val creatorMatch = createdByUserId.isNullOrBlank() || event.creatorId == createdByUserId
+        val attendingMatch = attendingUserId.isNullOrBlank() || attendingUserId in event.attendeeIds
+        return categoryMatch && dateMatch && creatorMatch && attendingMatch
     }
 
     fun getEventById(eventId: String): Flow<Result<Event>> = callbackFlow {
@@ -267,6 +286,34 @@ class EventRepository @Inject constructor(
     suspend fun deleteEvent(eventId: String): Result<Unit> {
         return try {
             firestore.collection("events").document(eventId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun toggleAttendance(eventId: String, userId: String): Result<Unit> {
+        return try {
+            val eventRef = firestore.collection("events").document(eventId)
+            val userRef = firestore.collection("users").document(userId)
+
+            firestore.runTransaction { transaction ->
+                val eventSnapshot = transaction.get(eventRef)
+                val currentAttendees = eventSnapshot.get("attendeeIds") as? List<String> ?: emptyList()
+
+                // Proveravamo da li korisnik već prisustvuje
+                if (userId in currentAttendees) {
+                    // Ako da, ukloni ga (atomic operation)
+                    transaction.update(eventRef, "attendeeIds", FieldValue.arrayRemove(userId))
+                    transaction.update(userRef, "attendingEventIds", FieldValue.arrayRemove(eventId))
+                } else {
+                    // Ako ne, dodaj ga (atomic operation)
+                    transaction.update(eventRef, "attendeeIds", FieldValue.arrayUnion(userId))
+                    transaction.update(userRef, "attendingEventIds", FieldValue.arrayUnion(eventId))
+                }
+                null
+            }.await()
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

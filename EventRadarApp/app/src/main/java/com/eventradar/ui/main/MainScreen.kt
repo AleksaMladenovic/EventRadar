@@ -39,7 +39,10 @@ fun MainScreen(rootNavController: NavController) {
 
     Scaffold(
         topBar = {
-            if(currentRoute == Routes.MAP_SCREEN || currentRoute== Routes.EVENTS_LIST_SCREEN|| currentRoute == Routes.USER_EVENTS_SCREEN)
+            if(currentRoute == Routes.MAP_SCREEN ||
+                currentRoute== Routes.EVENTS_LIST_SCREEN||
+                currentRoute == Routes.USER_EVENTS_SCREEN||
+                currentRoute == Routes.ATTENDING_EVENTS_SCREEN)
             TopAppBar(
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {

@@ -6,15 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.eventradar.data.model.Event
 import com.eventradar.data.repository.EventRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,11 +21,15 @@ class EventsListViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(EventsListState())
     val state: StateFlow<EventsListState> = _state.asStateFlow()
-    private val userId: String? = savedStateHandle.get("userId")
+    private val createdByUserId: String? = savedStateHandle.get("createdByUserId")
+    private val attendingUserId: String? = savedStateHandle.get("attendingUserId")
 
     init {
         viewModelScope.launch {
-            eventRepository.getFilteredEvents(userId).collect { result ->
+            eventRepository.getFilteredEvents(
+                createdByUserId = createdByUserId,
+                attendingUserId = attendingUserId,
+            ).collect { result ->
                 result.onSuccess { events ->
                     _state.update {
                         it.copy(

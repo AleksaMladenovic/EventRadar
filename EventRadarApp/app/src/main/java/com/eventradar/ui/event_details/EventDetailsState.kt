@@ -5,5 +5,6 @@ import com.eventradar.data.model.Event
 data class EventDetailsState(
     val event: Event? = null,
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    val isCurrentUserAttending: Boolean = false,
 )

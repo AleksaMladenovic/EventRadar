@@ -30,6 +30,8 @@ class EventDetailsViewModel @Inject constructor(
     private val _event = MutableSharedFlow<EventDetailsEvent>()
     val event = _event.asSharedFlow()
 
+    private val currentUserId: String? = authRepository.getCurrentUserId()
+
     init {
         // Čitamo 'eventId' iz argumenata rute
         val eventId: String? = savedStateHandle.get("eventId")
@@ -47,8 +49,9 @@ class EventDetailsViewModel @Inject constructor(
         eventRepository.getEventById(eventId)
             .onEach { result ->
                 result.onSuccess { event ->
+                    val isAttending = currentUserId?.let {it in event.attendeeIds}?:false
                     // Ako je uspešno, ažuriraj stanje sa podacima o događaju
-                    _state.update { it.copy(event = event, isLoading = false, error = null) }
+                    _state.update { it.copy(event = event, isLoading = false, error = null, isCurrentUserAttending = isAttending) }
                 }.onFailure { exception ->
                     // Ako je neuspešno, ažuriraj stanje sa porukom o grešci
                     _state.update { it.copy(isLoading = false, error = exception.message) }
@@ -75,6 +78,23 @@ class EventDetailsViewModel @Inject constructor(
             } else {
                 val errorMessage = result.exceptionOrNull()?.message ?: "An unknown error occurred."
                 _event.emit(EventDetailsEvent.DeletionError(errorMessage))
+            }
+        }
+    }
+
+    fun onToggleAttendanceClick() {
+        viewModelScope.launch {
+            val eventId = state.value.event?.id
+            if (eventId == null || currentUserId == null) return@launch
+
+            val isCurrentlyAttending = state.value.isCurrentUserAttending
+            _state.update { it.copy(isCurrentUserAttending = !isCurrentlyAttending) }
+
+            val result = eventRepository.toggleAttendance(eventId, currentUserId)
+
+            result.onFailure {
+                _state.update { it.copy(isCurrentUserAttending = isCurrentlyAttending) }
+                // TODO: Prikazati Toast poruku o grešci
             }
         }
     }

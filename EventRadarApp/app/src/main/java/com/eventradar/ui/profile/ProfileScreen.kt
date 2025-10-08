@@ -31,6 +31,7 @@ import com.eventradar.data.model.User
 fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onNavigateToMyEvents : (String) -> Unit,
+    onNavigateToAttendingEvents : (String) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -50,7 +51,8 @@ fun ProfileScreen(
                 ProfileContent(
                     user = state.user!!,
                     onSignOut = { viewModel.signOut() },
-                    onNavigateToMyEvents
+                    onNavigateToMyEvents,
+                    onNavigateToAttendingEvents,
                 )
             }
         }
@@ -61,7 +63,8 @@ fun ProfileScreen(
 private fun ProfileContent(
     user: User,
     onSignOut: () -> Unit,
-    onNavigateToMyEvents : (String) -> Unit
+    onNavigateToMyEvents : (String) -> Unit,
+    onNavigateToAttendingEvents : (String) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -131,8 +134,14 @@ private fun ProfileContent(
 
         Spacer(modifier = Modifier.weight(1f)) // Gura dugme na dno
 
+        // Dugme za moje event-e
         Button(onClick = {onNavigateToMyEvents(user.uid)}) {
             Text("My Events")
+        }
+
+        // Dugme za prijavljene evente
+        OutlinedButton(onClick = {onNavigateToAttendingEvents(user.uid)}) {
+            Text("Events I'm Attending")
         }
         // Dugme za odjavu
         Button(

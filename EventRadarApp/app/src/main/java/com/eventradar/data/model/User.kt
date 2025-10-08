@@ -11,5 +11,6 @@ data class User(
     val email: String = "",
     val profileImageUrl: String? = null,
     val createdAt: Timestamp = Timestamp.now(),
-    val points: Long = 0
+    val points: Long = 0,
+    val attendingEventIds: List<String> = emptyList(),
 )
