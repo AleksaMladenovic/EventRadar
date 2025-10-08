@@ -8,6 +8,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.eventradar.data.model.Comment
+import com.eventradar.data.model.CommentWithAuthor
+import com.eventradar.data.model.User
+import java.security.Timestamp
 
 @Composable
 fun CommentInput(

@@ -1,5 +1,6 @@
 package com.eventradar.ui.event_details
 
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +10,8 @@ import com.eventradar.data.repository.AuthRepository
 import com.eventradar.data.repository.CommentRepository
 import com.eventradar.data.repository.EventRepository
 import com.eventradar.data.repository.UserRepository
+import com.google.android.gms.maps.model.LatLng
+import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -59,8 +62,24 @@ class EventDetailsViewModel @Inject constructor(
             .onEach { result ->
                 result.onSuccess { event ->
                     val isAttending = currentUserId?.let {it in event.attendeeIds}?:false
+
+                    val averageRating = if(event.ratingCount>0){
+                        (event.ratingSum/event.ratingCount).toFloat()
+                    }else{
+                        0f
+                    }
+                    val currentUserRating = event.ratedByUserIds[currentUserId]?.toInt() ?: 0
+
                     // Ako je uspešno, ažuriraj stanje sa podacima o događaju
-                    _state.update { it.copy(event = event, isLoading = false, error = null, isCurrentUserAttending = isAttending) }
+                    _state.update {
+                        it.copy(
+                            event = event,
+                            isLoading = false,
+                            error = null,
+                            isCurrentUserAttending = isAttending,
+                            averageRating = averageRating,
+                            currentUserRating = currentUserRating,
+                        ) }
                 }.onFailure { exception ->
                     // Ako je neuspešno, ažuriraj stanje sa porukom o grešci
                     _state.update { it.copy(isLoading = false, error = exception.message) }
@@ -134,6 +153,20 @@ class EventDetailsViewModel @Inject constructor(
                     // TODO: Prikazati grešku korisniku
                     println("Failed to add comment: ${it.message}")
                 }
+            }
+        }
+    }
+
+    fun onRatingChanged(newRating: Int) {
+        viewModelScope.launch {
+            val eventId = state.value.event?.id ?: return@launch
+
+            _state.update { it.copy(currentUserRating = newRating) }
+
+            val result = eventRepository.rateEvent(eventId, newRating.toDouble())
+
+            result.onFailure {
+                println("Failed to submit rating: ${it.message}")
             }
         }
     }

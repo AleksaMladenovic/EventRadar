@@ -9,4 +9,6 @@ data class EventDetailsState(
     val error: String? = null,
     val isCurrentUserAttending: Boolean = false,
     val comments: List<CommentWithAuthor> = emptyList(),
+    val averageRating: Float = 0f,
+    val currentUserRating: Int = 0,
 )

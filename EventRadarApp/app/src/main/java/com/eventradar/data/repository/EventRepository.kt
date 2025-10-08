@@ -14,6 +14,8 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.toObject
 import com.google.firebase.firestore.toObjects
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +28,7 @@ import javax.inject.Singleton
 import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.launch
 import org.imperiumlabs.geofirestore.GeoQuery
 import org.imperiumlabs.geofirestore.listeners.GeoQueryEventListener
 import kotlin.String
@@ -34,10 +37,10 @@ import kotlin.coroutines.resume
 @Singleton
 class EventRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val userRepository: UserRepository,
     private val geoFirestore: GeoFirestore,
     private val filterRepository: FilterRepository,
-    private val locationRepository: LocationRepository
+    private val locationRepository: LocationRepository,
+    private val authRepository: AuthRepository,
 ) {
     suspend fun addEvent(event: Event): Result<Unit> {
         return try {
@@ -319,4 +322,60 @@ class EventRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+
+    suspend fun rateEvent(eventId: String, newRating: Double): Result<Unit> {
+        val userId = authRepository.getCurrentUserId()
+        if (userId == null) {
+            return Result.failure(Exception("User not authenticated."))
+        }
+        if (newRating < 1.0 || newRating > 5.0) {
+            return Result.failure(IllegalArgumentException("Rating must be between 1 and 5."))
+        }
+
+        return try {
+            val eventRef = firestore.collection("events").document(eventId)
+
+            firestore.runTransaction { transaction ->
+                val eventSnapshot = transaction.get(eventRef)
+                if (!eventSnapshot.exists()) {
+                    throw Exception("Event not found.")
+                }
+
+                val currentRatingSum = eventSnapshot.getDouble("ratingSum") ?: 0.0
+                val currentRatingCount = eventSnapshot.getLong("ratingCount") ?: 0L
+                val ratedByMap = eventSnapshot.get("ratedByUserIds") as? Map<String, Double> ?: emptyMap()
+
+                val oldRating = ratedByMap[userId] // Proveri da li je korisnik već ocenio
+
+                var newRatingSum = currentRatingSum
+                var newRatingCount = currentRatingCount
+
+                if (oldRating != null) {
+                    // Korisnik menja ocenu
+                    newRatingSum = currentRatingSum - oldRating + newRating
+                } else {
+                    // Korisnik ocenjuje prvi put
+                    newRatingSum = currentRatingSum + newRating
+                    newRatingCount = currentRatingCount + 1
+
+
+                }
+
+                // Ažuriraj mapu sa novom ocenom korisnika
+                val newRatedByMap = ratedByMap.toMutableMap().apply { this[userId] = newRating }
+
+                // Ažuriraj dokument unutar transakcije
+                transaction.update(eventRef, "ratingSum", newRatingSum)
+                transaction.update(eventRef, "ratingCount", newRatingCount)
+                transaction.update(eventRef, "ratedByUserIds", newRatedByMap)
+
+            }.await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 }

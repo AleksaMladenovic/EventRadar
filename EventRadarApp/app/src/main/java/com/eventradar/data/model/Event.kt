@@ -27,6 +27,9 @@ data class Event(
     var geohash: String? = null,
 
     val attendeeIds: List<String> = emptyList(),
+    val ratingSum: Double = 0.0,
+    val ratingCount: Long = 0,
+    val ratedByUserIds: Map<String, Double> = emptyMap()
 ){
     constructor() : this(
         "",
@@ -43,6 +46,10 @@ data class Event(
         null,
         GeoPoint(0.0, 0.0),
         null,
-        emptyList<String>())
+        emptyList<String>(),
+        0.0,
+        0,
+        emptyMap(),
+        )
 }
 
