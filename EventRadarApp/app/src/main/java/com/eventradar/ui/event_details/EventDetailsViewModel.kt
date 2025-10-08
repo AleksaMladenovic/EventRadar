@@ -6,12 +6,15 @@ import androidx.lifecycle.viewModelScope
 import com.eventradar.data.repository.AuthRepository
 import com.eventradar.data.repository.EventRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,6 +26,9 @@ class EventDetailsViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(EventDetailsState())
     val state: StateFlow<EventDetailsState> = _state.asStateFlow()
+
+    private val _event = MutableSharedFlow<EventDetailsEvent>()
+    val event = _event.asSharedFlow()
 
     init {
         // Čitamo 'eventId' iz argumenata rute
@@ -54,4 +60,29 @@ class EventDetailsViewModel @Inject constructor(
         return authRepository.getCurrentUserId() == creatorId
     }
 
+    fun onDeleteEvent() {
+        viewModelScope.launch {
+            val eventId = state.value.event?.id
+            if (eventId == null) {
+                _event.emit(EventDetailsEvent.DeletionError("Event ID is missing."))
+                return@launch
+            }
+
+            val result = eventRepository.deleteEvent(eventId)
+
+            if (result.isSuccess) {
+                _event.emit(EventDetailsEvent.DeletionSuccess)
+            } else {
+                val errorMessage = result.exceptionOrNull()?.message ?: "An unknown error occurred."
+                _event.emit(EventDetailsEvent.DeletionError(errorMessage))
+            }
+        }
+    }
+
+
+}
+
+sealed class EventDetailsEvent {
+    object DeletionSuccess : EventDetailsEvent()
+    data class DeletionError(val message: String) : EventDetailsEvent()
 }

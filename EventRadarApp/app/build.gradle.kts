@@ -92,6 +92,7 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.geofirestore.android)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.runtime)
     kapt(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
     testImplementation(libs.junit)

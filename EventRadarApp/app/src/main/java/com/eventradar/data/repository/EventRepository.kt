@@ -263,4 +263,13 @@ class EventRepository @Inject constructor(
             Result.failure(e)
         }
     }
+
+    suspend fun deleteEvent(eventId: String): Result<Unit> {
+        return try {
+            firestore.collection("events").document(eventId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
