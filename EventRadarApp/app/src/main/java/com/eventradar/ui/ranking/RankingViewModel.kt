@@ -29,7 +29,12 @@ class RankingViewModel @Inject constructor(
             .onEach { result ->
                 result.onSuccess { users ->
                     // Ako je uspešno, ažuriramo stanje sa listom korisnika
-                    _state.update { it.copy(users = users, isLoading = false, error = null) }
+                    _state.update { it.copy(
+                        topThreeUsers = users.take(3),
+                        otherUsers = users.drop(3),
+                        isLoading = false,
+                        error = null
+                    ) }
                 }.onFailure { exception ->
                     // Ako je neuspešno, ažuriramo stanje sa greškom
                     _state.update { it.copy(isLoading = false, error = exception.message) }
