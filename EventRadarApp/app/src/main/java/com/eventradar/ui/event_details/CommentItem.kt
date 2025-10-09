@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -37,7 +38,7 @@ fun CommentItem(commentWithAuthor: CommentWithAuthor) {
         // Avatar autora
         AsyncImage(
             model = author?.profileImageUrl,
-            contentDescription = "Avatar of ${author?.username}",
+            contentDescription = stringResource(id = R.string.avatar_of, author?.username ?: ""),
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape),
@@ -51,7 +52,7 @@ fun CommentItem(commentWithAuthor: CommentWithAuthor) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "${author?.firstName ?: "Unknown"} ${author?.lastName ?: "User"}",
+                    text = "${author?.firstName ?: stringResource(id = R.string.unknown)} ${author?.lastName ?: stringResource(id = R.string.user_label)}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold
                 )

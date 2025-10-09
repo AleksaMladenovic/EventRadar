@@ -38,10 +38,10 @@ fun PublicProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.user?.username ?: "User Profile") },
+                title = { Text(state.user?.username ?: stringResource(id = R.string.user_profile)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(id = R.string.cd_back))
                     }
                 }
             )
@@ -80,7 +80,7 @@ fun PublicProfileScreen(
                         if (state.userEvents.isNotEmpty()) {
                             item {
                                 Text(
-                                    text = "Events by ${state.user!!.firstName}",
+                                    text = stringResource(id = R.string.events_by, state.user!!.firstName),
                                     style = MaterialTheme.typography.titleMedium,
                                     modifier = Modifier.padding(top = 16.dp, bottom = 8.dp).fillMaxWidth()
                                 )
@@ -109,7 +109,7 @@ private fun ProfileHeader(user: User) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         AsyncImage(
             model = user.profileImageUrl,
-            contentDescription = "Profile picture of ${user.username}",
+            contentDescription = stringResource(id = R.string.profile_picture_description, user.username),
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape),

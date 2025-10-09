@@ -116,4 +116,37 @@
     <string name="within_distance">Within %1$d km</string>
     <string name="reset_filters">Reset Filters</string>
     <string name="search_placeholder">Search by event name...</string>
+    
+    <string name="user_profile">User Profile</string>
+    <string name="cd_back">Back</string>
+    <string name="events_by">Events by %1$s</string>
+    <string name="first_place">First Place</string>
+    <string name="avatar">Avatar</string>
+    <string name="toast_event_deleted_success">Event deleted successfully</string>
+    <string name="event_details_title">Event Details</string>
+    <string name="edit_event">Edit Event</string>
+    <string name="delete_event">Delete Event</string>
+    <string name="confirm_deletion">Confirm Deletion</string>
+    <string name="confirm_deletion_message">Are you sure you want to permanently delete this event? This action cannot be undone.</string>
+    <string name="delete_button">Delete</string>
+    <string name="tab_comments">Comments</string>
+    <string name="tab_rating">Rating</string>
+    <string name="no_comments_yet">No comments yet. Be the first to comment!</string>
+    <string name="average_rating">Average Rating</string>
+    <string name="based_on_ratings">Based on %1$d ratings</string>
+    <string name="your_rating">Your Rating</string>
+    <string name="youre_going">You\'re Going!</string>
+    <string name="im_going">I\'m Going</string>
+    <string name="people_are_going">%1$d people are going</string>
+    <string name="na">N/A</string>
+    <string name="location_lat_lng">Location (Lat: %1$.6f, Lng: %2$.6f)</string>
+    <string name="star_description">Star %1$d</string>
+    <string name="write_a_comment">Write a comment...</string>
+    <string name="send_comment">Send Comment</string>
+    <string name="date_not_set">Date not set</string>
+    <string name="avatar_of">Avatar of %1$s</string>
+    <string name="unknown">Unknown</string>
+    <string name="user_label">User</string>
+    <string name="my_events">My Events</string>
+    <string name="events_im_attending">Events I\'m Attending</string>
 </resources>

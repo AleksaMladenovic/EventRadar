@@ -136,12 +136,12 @@ private fun ProfileContent(
 
         // Dugme za moje event-e
         Button(onClick = {onNavigateToMyEvents(user.uid)}) {
-            Text("My Events")
+            Text(stringResource(id = R.string.my_events))
         }
 
         // Dugme za prijavljene evente
         OutlinedButton(onClick = {onNavigateToAttendingEvents(user.uid)}) {
-            Text("Events I'm Attending")
+            Text(stringResource(id = R.string.events_im_attending))
         }
         // Dugme za odjavu
         Button(

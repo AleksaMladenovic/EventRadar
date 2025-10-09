@@ -7,7 +7,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.eventradar.R;
 import com.eventradar.data.model.Comment
 import com.eventradar.data.model.CommentWithAuthor
 import com.eventradar.data.model.User
@@ -33,7 +35,7 @@ fun CommentInput(
                 value = text,
                 onValueChange = { text = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Write a comment...") },
+                placeholder = { Text(stringResource(id = R.string.write_a_comment)) },
                 maxLines = 4
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -45,8 +47,8 @@ fun CommentInput(
                     }
                 },
                 enabled = text.isNotBlank()
-            ) {
-                Icon(Icons.Default.Send, contentDescription = "Send Comment")
+                ) {
+                Icon(Icons.Default.Send, contentDescription = stringResource(id = R.string.send_comment))
             }
         }
     }

@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.eventradar.R
 import androidx.compose.ui.unit.sp
 import com.eventradar.data.model.Event
 import com.eventradar.data.model.EventCategory
@@ -65,7 +66,7 @@ fun EventListItem(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = event.eventTimestamp?.toDate()?.let { dateFormatter.format(it) } ?: "Date not set",
+                            text = event.eventTimestamp?.toDate()?.let { dateFormatter.format(it) } ?: stringResource(id = R.string.date_not_set),
                             style = MaterialTheme.typography.bodyMedium, // Malo veći body
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

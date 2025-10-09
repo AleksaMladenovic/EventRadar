@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -38,7 +39,7 @@ fun PodiumItem(
         if (rank == 1) {
             Icon(
                 imageVector = Icons.Default.WorkspacePremium,
-                contentDescription = "First Place",
+                contentDescription = stringResource(id = R.string.first_place),
                 tint = Color(0xFFFFD700), // Zlatna boja
                 modifier = Modifier.size(24.dp)
             )
@@ -49,7 +50,7 @@ fun PodiumItem(
 
         AsyncImage(
             model = user.profileImageUrl,
-            contentDescription = "Avatar",
+            contentDescription = stringResource(id = R.string.avatar),
             modifier = Modifier
                 .size(size)
                 .clip(CircleShape)
@@ -59,6 +60,6 @@ fun PodiumItem(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(text = user.username, fontWeight = FontWeight.Bold, maxLines = 1)
-        Text(text = "${user.points} pts", color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
+        Text(text = stringResource(id = R.string.points_format, user.points), color = MaterialTheme.colorScheme.primary, fontSize = 14.sp)
     }
 }

@@ -53,7 +53,7 @@ fun EventDetailsScreen(
         viewModel.event.collect { event ->
             when (event) {
                 is EventDetailsEvent.DeletionSuccess -> {
-                    Toast.makeText(context, "Event deleted successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.toast_event_deleted_success), Toast.LENGTH_SHORT).show()
                     onNavigateBack() // Vrati korisnika na prethodni ekran
                 }
                 is EventDetailsEvent.DeletionError -> {
@@ -68,7 +68,7 @@ fun EventDetailsScreen(
         topBar = {
             TopAppBar(
                 modifier = Modifier.statusBarsPadding(),
-                title = { Text(event?.name ?: "Event Details") },
+                title = { Text(event?.name ?: stringResource(id = R.string.event_details_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, "Back")
@@ -77,18 +77,18 @@ fun EventDetailsScreen(
                 actions = {
                     // Akcija "Show on Map" je uvek vidljiva
                     if (event != null) {
-                        IconButton(onClick = { onNavigateToMap(LatLng(event.location.latitude, event.location.longitude)) }) {
-                            Icon(Icons.Default.Map, contentDescription = "Show on Map")
+                IconButton(onClick = { onNavigateToMap(LatLng(event.location.latitude, event.location.longitude)) }) {
+                    Icon(Icons.Default.Map, contentDescription = stringResource(id = R.string.show_on_map))
                         }
                     }
 
                     // Akcije "Edit" i "Delete" su vidljive samo vlasniku
                     if (isOwner) {
                         IconButton(onClick = { onNavigateToEditEvent(event.id) }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit Event")
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(id = R.string.edit_event))
                         }
                         IconButton(onClick = { showDeleteConfirmDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete Event", tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(id = R.string.delete_event), tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 },
@@ -124,8 +124,8 @@ fun EventDetailsScreen(
     if (showDeleteConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = { Text("Confirm Deletion") },
-            text = { Text("Are you sure you want to permanently delete this event? This action cannot be undone.") },
+            title = { Text(stringResource(id = R.string.confirm_deletion)) },
+            text = { Text(stringResource(id = R.string.confirm_deletion_message)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -133,13 +133,13 @@ fun EventDetailsScreen(
                         showDeleteConfirmDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text("Delete")
+                    ) {
+                    Text(stringResource(id = R.string.delete_button))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel")
+                    TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                    Text(stringResource(id = R.string.cancel_button))
                 }
             }
         )
@@ -163,7 +163,7 @@ private fun EventDetailsContent(
     onRatingChanged: (Int)->Unit,
 ) {
     var selectedTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("Comments", "Rating")
+    val tabs = listOf(stringResource(id = R.string.tab_comments), stringResource(id = R.string.tab_rating))
 
     // Column sada samo drži polje za unos, a lista je iznad njega
     Column(modifier = Modifier.fillMaxSize()) {
@@ -200,7 +200,7 @@ private fun EventDetailsContent(
                     0 -> { // Comments
                         Column(modifier = Modifier.padding(16.dp)) {
                             if (comments.isEmpty()) {
-                                Text("No comments yet. Be the first to comment!", modifier = Modifier.padding(vertical = 16.dp))
+                                Text(stringResource(id = R.string.no_comments_yet), modifier = Modifier.padding(vertical = 16.dp))
                             }
                             // Lista komentara
                             comments.forEach { commentWithAuthor ->
@@ -245,17 +245,17 @@ private fun RatingSection(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Average Rating", style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(id = R.string.average_rating), style = MaterialTheme.typography.titleMedium)
         Text(
             text = String.format(Locale.US, "%.1f", averageRating),
             style = MaterialTheme.typography.displayLarge,
             fontWeight = FontWeight.Bold
         )
-        Text("Based on $ratingCount ratings", style = MaterialTheme.typography.bodySmall)
+    Text(stringResource(id = R.string.based_on_ratings, ratingCount), style = MaterialTheme.typography.bodySmall)
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        Text("Your Rating", style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(id = R.string.your_rating), style = MaterialTheme.typography.titleMedium)
         RatingBar(
             currentRating = currentUserRating,
             onRatingChanged = onRatingChanged
@@ -308,16 +308,16 @@ private fun EventInfoSection(
         // Dugme za prisustvo
         Button(onClick = onToggleAttendance, modifier = Modifier.fillMaxWidth()) {
             if (isCurrentUserAttending) {
-                Icon(Icons.Default.Check, contentDescription = "You are going")
+                Icon(Icons.Default.Check, contentDescription = stringResource(id = R.string.youre_going))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("You're Going!")
+                Text(stringResource(id = R.string.youre_going))
             } else {
-                Text("I'm Going")
+                Text(stringResource(id = R.string.im_going))
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "${event.attendeeIds.size} people are going",
+            text = stringResource(id = R.string.people_are_going, event.attendeeIds.size),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -327,13 +327,13 @@ private fun EventInfoSection(
         val dateFormatter = SimpleDateFormat("dd MMMM yyyy, HH:mm", Locale.getDefault())
         Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
 
-            DetailRow(
+                DetailRow(
                 icon = Icons.Default.Event,
-                text = event.eventTimestamp?.toDate()?.let { dateFormatter.format(it) } ?: "N/A"
+                text = event.eventTimestamp?.toDate()?.let { dateFormatter.format(it) } ?: stringResource(id = R.string.na)
             )
             DetailRow(
                 icon = Icons.Default.LocationOn,
-                text = "Location (Lat: ${event.location.latitude}, Lng: ${event.location.longitude})"
+                text = stringResource(id = R.string.location_lat_lng, event.location.latitude, event.location.longitude)
             )
             Row(
                 modifier = Modifier.clickable { onCreatorClick(event.creatorId) },
