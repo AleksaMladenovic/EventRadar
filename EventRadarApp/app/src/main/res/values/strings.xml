@@ -149,4 +149,10 @@
     <string name="user_label">User</string>
     <string name="my_events">My Events</string>
     <string name="events_im_attending">Events I\'m Attending</string>
+
+    <!-- Edit Profile Screen -->
+    <string name="edit_profile_title">Edit Profile</string>
+    <string name="save_changes_button">Save Changes</string>
+    <string name="profile_update_success">Profile updated successfully!</string>
+    <string name="profile_update_failed">Failed to update profile.</string>
 </resources>

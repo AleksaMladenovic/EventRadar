@@ -12,6 +12,7 @@ import androidx.navigation.navArgument
 import com.eventradar.navigation.Routes
 import com.eventradar.ui.add_event.AddEventScreen
 import com.eventradar.ui.auth.AuthViewModel
+import com.eventradar.ui.edit_profile.EditProfileScreen
 import com.eventradar.ui.event_details.EventDetailsScreen
 import com.eventradar.ui.events_list.EventsListScreen
 import com.eventradar.ui.location_picker.LocationPickerScreen
@@ -78,7 +79,10 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
                 },
                 onNavigateToAttendingEvents = {currentUserId ->
                     homeNavController.navigate("attending_events/${currentUserId}")
-                }
+                },
+                onNavigateToEditProfile = {
+                    homeNavController.navigate(Routes.EDIT_PROFILE_SCREEN)
+                },
             )
         }
         composable(
@@ -185,5 +189,12 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
             )
         }
 
+        composable(Routes.EDIT_PROFILE_SCREEN) {
+            EditProfileScreen(
+                onNavigateBack = {
+                    homeNavController.popBackStack()
+                }
+            )
+        }
     }
 }

@@ -129,4 +129,28 @@ class UserRepository @Inject constructor(
             false
         }
     }
+
+    suspend fun updateUserProfile(
+        userId: String,
+        firstName: String,
+        lastName: String,
+        username: String,
+        phone: String
+    ): Result<Unit> {
+        return try {
+            val userRef = firestore.collection("users").document(userId)
+
+            val updates = mapOf(
+                "firstName" to firstName,
+                "lastName" to lastName,
+                "username" to username,
+                "phone" to phone
+            )
+
+            userRef.update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

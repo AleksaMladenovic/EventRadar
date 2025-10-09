@@ -32,6 +32,7 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onNavigateToMyEvents : (String) -> Unit,
     onNavigateToAttendingEvents : (String) -> Unit,
+    onNavigateToEditProfile: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -53,6 +54,7 @@ fun ProfileScreen(
                     onSignOut = { viewModel.signOut() },
                     onNavigateToMyEvents,
                     onNavigateToAttendingEvents,
+                    onNavigateToEditProfile,
                 )
             }
         }
@@ -65,6 +67,7 @@ private fun ProfileContent(
     onSignOut: () -> Unit,
     onNavigateToMyEvents : (String) -> Unit,
     onNavigateToAttendingEvents : (String) -> Unit,
+    onNavigateToEditProfile: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -134,6 +137,10 @@ private fun ProfileContent(
 
         Spacer(modifier = Modifier.weight(1f)) // Gura dugme na dno
 
+        // Dugme za Edit profile
+        OutlinedButton(onClick = onNavigateToEditProfile) {
+            Text(stringResource(id = R.string.edit_profile_title))
+        }
         // Dugme za moje event-e
         Button(onClick = {onNavigateToMyEvents(user.uid)}) {
             Text(stringResource(id = R.string.my_events))
