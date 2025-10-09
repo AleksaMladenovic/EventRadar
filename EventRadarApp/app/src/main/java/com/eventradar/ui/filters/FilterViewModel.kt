@@ -6,6 +6,7 @@ import com.eventradar.data.model.EventCategory
 import com.eventradar.data.model.EventFilters
 import com.eventradar.data.repository.FilterRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class FilterViewModel @Inject constructor(
-    private val filterRepository: FilterRepository
+    private val filterRepository: FilterRepository,
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val _temporaryFilters = MutableStateFlow(filterRepository.filters.value)
@@ -26,7 +28,7 @@ class FilterViewModel @Inject constructor(
     val temporaryFilters: StateFlow<EventFilters> = _temporaryFilters.asStateFlow()
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             filterRepository.filters.collect { appliedFilters ->
                 _temporaryFilters.value = appliedFilters
             }

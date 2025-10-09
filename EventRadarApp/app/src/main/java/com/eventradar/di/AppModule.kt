@@ -15,6 +15,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import org.imperiumlabs.geofirestore.GeoFirestore
 import javax.inject.Named
 import javax.inject.Singleton
@@ -85,4 +87,8 @@ object AppModule {
     ): CommentRepository {
         return CommentRepository(firestore, auth, userRepository)
     }
+
+    @Provides
+    @Singleton
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 }

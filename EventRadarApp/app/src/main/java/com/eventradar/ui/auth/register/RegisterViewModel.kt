@@ -8,6 +8,7 @@ import com.eventradar.R
 import com.eventradar.data.repository.AuthRepository
 import com.eventradar.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,8 +26,9 @@ sealed class RegisterEvent {
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val userRepository: UserRepository
-) : ViewModel() {
+    private val userRepository: UserRepository,
+    private val ioDispatcher: CoroutineDispatcher,
+    ) : ViewModel() {
 
     private val _formState = MutableStateFlow(RegistrationFormState())
     val formState: StateFlow<RegistrationFormState> = _formState.asStateFlow()
@@ -60,7 +62,7 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun register() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             _formState.update { it.copy(isLoading = true) }
 
             if(validateForm()){

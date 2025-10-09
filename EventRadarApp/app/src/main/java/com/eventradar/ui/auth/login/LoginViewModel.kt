@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.eventradar.R // Importuj R fajl za string resurse
 import com.eventradar.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -17,7 +18,8 @@ sealed class LoginEvent {
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val ioDispatcher: CoroutineDispatcher
 ): ViewModel() {
 
     private val _formState = MutableStateFlow(LoginFormState())
@@ -36,7 +38,7 @@ class LoginViewModel @Inject constructor(
     }
 
     fun login() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             val state = _formState.value
 
             // --- VALIDACIJA ---

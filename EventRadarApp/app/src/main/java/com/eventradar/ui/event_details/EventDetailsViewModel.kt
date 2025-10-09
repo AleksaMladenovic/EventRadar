@@ -13,6 +13,8 @@ import com.eventradar.data.repository.UserRepository
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.scopes.ViewModelScoped
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +23,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
@@ -33,6 +36,7 @@ class EventDetailsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val userRepository: UserRepository,
     private val commentRepository: CommentRepository,
+    private val ioDispatcher: CoroutineDispatcher,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -59,6 +63,7 @@ class EventDetailsViewModel @Inject constructor(
     private fun getEventDetails(eventId: String) {
         // .onEach se poziva svaki put kada Flow emituje novu vrednost
         eventRepository.getEventById(eventId)
+            .flowOn(ioDispatcher)
             .onEach { result ->
                 result.onSuccess { event ->
                     val isAttending = currentUserId?.let {it in event.attendeeIds}?:false
@@ -92,7 +97,7 @@ class EventDetailsViewModel @Inject constructor(
     }
 
     fun onDeleteEvent() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             val eventId = state.value.event?.id
             if (eventId == null) {
                 _event.emit(EventDetailsEvent.DeletionError("Event ID is missing."))
@@ -111,7 +116,7 @@ class EventDetailsViewModel @Inject constructor(
     }
 
     fun onToggleAttendanceClick() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             val eventId = state.value.event?.id
             if (eventId == null || currentUserId == null) return@launch
 
@@ -128,7 +133,7 @@ class EventDetailsViewModel @Inject constructor(
     }
 
     private fun getComments(eventId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             commentRepository.getCommentsForEvent(eventId).collect { result ->
                 result.onSuccess { comments ->
                     // Dobili smo listu "sirovih" komentara
@@ -147,7 +152,7 @@ class EventDetailsViewModel @Inject constructor(
     }
 
     fun onAddComment(text: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             if (eventId != null) {
                 commentRepository.addComment(eventId, text).onFailure {
                     // TODO: Prikazati grešku korisniku
@@ -158,7 +163,7 @@ class EventDetailsViewModel @Inject constructor(
     }
 
     fun onRatingChanged(newRating: Int) {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             val eventId = state.value.event?.id ?: return@launch
 
             _state.update { it.copy(currentUserRating = newRating) }

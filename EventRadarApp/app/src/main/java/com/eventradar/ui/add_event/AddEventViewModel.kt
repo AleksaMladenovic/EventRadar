@@ -18,6 +18,7 @@ import java.util.Locale
 import javax.inject.Inject
 import com.eventradar.R
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.CoroutineDispatcher
 import java.text.SimpleDateFormat
 
 sealed class AddEventResult {
@@ -29,7 +30,8 @@ sealed class AddEventResult {
 class AddEventViewModel @Inject constructor(
     private val eventRepository: EventRepository,
     private val userRepository: UserRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val _formState = MutableStateFlow(AddEventFormState())
@@ -57,7 +59,7 @@ class AddEventViewModel @Inject constructor(
 
 
     private fun loadEventForEditing(id: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             _formState.update { it.copy(isLoading = true) }
             eventRepository.getEventById(id).first().onSuccess { event -> // .first() da uzmemo samo jednu vrednost
                 val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
@@ -126,7 +128,7 @@ class AddEventViewModel @Inject constructor(
         _formState.update { it.copy(location = GeoPoint(latLng.latitude, latLng.longitude)) }
     }
     fun onSaveEvent() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             if (validateForm()) {
                 _formState.update { it.copy(isLoading = true) }
 

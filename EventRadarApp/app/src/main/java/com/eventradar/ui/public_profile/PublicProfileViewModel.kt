@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.eventradar.data.repository.EventRepository
 import com.eventradar.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -14,6 +15,7 @@ import javax.inject.Inject
 class PublicProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val eventRepository: EventRepository,
+    private val ioDispatcher: CoroutineDispatcher,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -33,7 +35,7 @@ class PublicProfileViewModel @Inject constructor(
     }
 
     private fun loadUserProfile(userId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             _state.update { it.copy(isLoading = true) }
             val result = userRepository.getUserById(userId)
             result.onSuccess { user ->
@@ -47,6 +49,7 @@ class PublicProfileViewModel @Inject constructor(
     private fun loadUserEvents(userId: String) {
         // Slušamo promene na događajima u realnom vremenu
         eventRepository.getEventsByCreator(userId)
+            .flowOn(ioDispatcher)
             .onEach { result ->
                 result.onSuccess { events ->
                     _state.update { it.copy(userEvents = events) }

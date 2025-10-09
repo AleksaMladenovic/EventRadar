@@ -9,6 +9,7 @@ import com.eventradar.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.GeoPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,6 +25,7 @@ import javax.inject.Inject
 class MapViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
     private val eventRepository: EventRepository,
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val _mapState = MutableStateFlow(MapState())
@@ -35,10 +37,11 @@ class MapViewModel @Inject constructor(
     init {
         fetchFilteredEvents()
     }
+
     fun startLocationUpdates() {
         if(locationJob?.isActive == true) return
 
-        locationJob = viewModelScope.launch {
+        locationJob = viewModelScope.launch(ioDispatcher) {
             locationRepository.getLocationUpdates().cancellable().collect { location ->
                 _mapState.update { it.copy(lastKnownLocation = location) }
             }
@@ -55,7 +58,7 @@ class MapViewModel @Inject constructor(
     }
 
     private fun fetchFilteredEvents() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             // Slušamo promene iz getFilteredEvents
             eventRepository.getFilteredEvents().collect { result ->
                 result.onSuccess { events ->

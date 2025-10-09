@@ -6,6 +6,7 @@ import com.eventradar.R
 import com.eventradar.data.repository.AuthRepository
 import com.eventradar.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -14,6 +15,7 @@ import javax.inject.Inject
 class EditProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val authRepository: AuthRepository,
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EditProfileState())
@@ -26,7 +28,7 @@ class EditProfileViewModel @Inject constructor(
     }
 
     private fun loadCurrentUser() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             val user = userRepository.getCurrentUser()
             if (user != null) {
                 originalUsername = user.username
@@ -59,7 +61,7 @@ class EditProfileViewModel @Inject constructor(
     }
 
     fun onSaveClicked() {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             // Prvo, pokreni validaciju
             if (validateForm()) {
                 _state.update { it.copy(isLoading = true) }

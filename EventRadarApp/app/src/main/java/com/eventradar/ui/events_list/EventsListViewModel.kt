@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.eventradar.data.model.Event
 import com.eventradar.data.repository.EventRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class EventsListViewModel @Inject constructor(
     private val eventRepository: EventRepository,
-    savedStateHandle: SavedStateHandle
+    savedStateHandle: SavedStateHandle,
+    private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EventsListState())
@@ -25,7 +27,7 @@ class EventsListViewModel @Inject constructor(
     private val attendingUserId: String? = savedStateHandle.get("attendingUserId")
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(ioDispatcher) {
             eventRepository.getFilteredEvents(
                 createdByUserId = createdByUserId,
                 attendingUserId = attendingUserId,
