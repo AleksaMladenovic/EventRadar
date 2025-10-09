@@ -80,8 +80,8 @@ class LocationService : Service() {
         val notification = NotificationCompat.Builder(this, "location_channel")
             .setContentTitle("EventRadar is Active")
             .setContentText("Tracking your location to find nearby events.")
-            .setSmallIcon(R.drawable.app_logo) // Zameni sa ikonicom aplikacije
-            .setOngoing(true) // Notifikacija se ne može odbaciti
+            .setSmallIcon(R.drawable.ic_notification)
+            .setOngoing(true)
             .build()
 
         // 3. Pokreni servis u 'foreground' modu
@@ -142,8 +142,8 @@ class LocationService : Service() {
         val notification = NotificationCompat.Builder(this, "location_channel")
             .setContentTitle("Nearby Event Alert!")
             .setContentText("A new event '${event.name}' is happening near you.")
-            .setSmallIcon(R.drawable.app_logo) // Koristi istu ikonicu
-            .setAutoCancel(true) // Notifikacija nestaje kad se klikne
+            .setSmallIcon(R.drawable.ic_notification)
+            .setAutoCancel(true)
             .build()
 
         // Koristimo ID događaja (konvertovan u Int) da bi svaka notifikacija bila jedinstvena
