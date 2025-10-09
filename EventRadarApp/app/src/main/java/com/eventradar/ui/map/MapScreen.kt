@@ -1,6 +1,7 @@
 package com.eventradar.ui.map
 
 import android.Manifest
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -16,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,6 +27,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.eventradar.R
 import com.eventradar.data.model.EventCategory
+import com.eventradar.services.LocationService
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -32,7 +35,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-
+import android.os.Build
 
 @Composable
 fun MapScreen(
@@ -46,6 +49,7 @@ fun MapScreen(
     var permissionState by remember { mutableStateOf(LocationPermissionState.LOADING) }
     val cameraPositionState = rememberCameraPositionState()
     val events by mapViewModel.eventsFlow.collectAsStateWithLifecycle(initialValue = Result.success(emptyList()))
+    val context = LocalContext.current
 
     // Launcher za traženje dozvola
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -62,29 +66,29 @@ fun MapScreen(
 
     // Jednokratno traženje dozvola pri pokretanju ekrana
     LaunchedEffect(Unit) {
-        permissionLauncher.launch(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
+        val permissionsToRequest = mutableListOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
         )
+
+        // Ako je uređaj na Androidu 13 (API 33) ili novijem,
+        // DODAJ I DOZVOLU ZA NOTIFIKACIJE.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+
+        // Pokreni launcher sa finalnom listom dozvola
+        permissionLauncher.launch(permissionsToRequest.toTypedArray())
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
-    // Upravljanje start/stop praćenjem lokacije
-    DisposableEffect(lifecycleOwner, permissionState) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (permissionState == LocationPermissionState.GRANTED) {
-                when (event) {
-                    Lifecycle.Event.ON_START -> mapViewModel.startLocationUpdates()
-                    Lifecycle.Event.ON_STOP -> mapViewModel.stopLocationUpdates()
-                    else -> {}
-                }
+    LaunchedEffect(permissionState) {
+        if (permissionState == LocationPermissionState.GRANTED) {
+            // Pošalji 'start' komandu servisu
+            Intent(context, LocationService::class.java).also {
+                it.action = LocationService.ACTION_START
+                context.startService(it)
             }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 

@@ -382,4 +382,41 @@ class EventRepository @Inject constructor(
         }
     }
 
+    suspend fun getEventsNearby(location: Location, radiusInKm: Double): Result<List<Event>> {
+        val geoQuery: GeoQuery = geoFirestore.queryAtLocation(
+            GeoPoint(location.latitude, location.longitude),
+            radiusInKm
+        )
+
+        // Koristimo suspendCancellableCoroutine da sačekamo rezultat
+        return suspendCancellableCoroutine { continuation ->
+            val eventsNearby = mutableListOf<Event>()
+            val listener = geoQuery.addGeoQueryEventListener(object : GeoQueryEventListener {
+                override fun onKeyEntered(documentID: String, location: GeoPoint) {
+                    firestore.collection("events").document(documentID).get()
+                        .addOnSuccessListener { document ->
+                            document.toObject<Event>()?.let { event ->
+                                eventsNearby.add(event)
+                            }
+                        }
+                }
+
+                override fun onGeoQueryReady() {
+                    // Kada je upit gotov, vrati rezultat
+                    continuation.resume(Result.success(eventsNearby.distinctBy { it.id }))
+                    geoQuery.removeAllListeners() // Očisti listener
+                }
+
+                override fun onGeoQueryError(exception: Exception) {
+                    continuation.resume(Result.failure(exception))
+                    geoQuery.removeAllListeners()
+                }
+
+                // Ignorišemo ostale
+                override fun onKeyExited(documentID: String) {}
+                override fun onKeyMoved(documentID: String, location: GeoPoint) {}
+            })
+        }
+    }
+
 }

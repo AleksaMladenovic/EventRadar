@@ -8,6 +8,11 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Potrebno za pokretanje servisa u pozadini -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Potrebno za API 33+ da bi servis mogao da prikaže notifikaciju -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:name=".EventRadarApplication"
         android:allowBackup="true"
@@ -34,6 +39,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".services.LocationService"
+            android:foregroundServiceType="location"/>
 
         <provider
             android:name="androidx.core.content.FileProvider"

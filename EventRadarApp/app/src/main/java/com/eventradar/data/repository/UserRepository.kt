@@ -1,11 +1,13 @@
 package com.eventradar.data.repository
 
+import android.location.Location
 import android.net.Uri
 import com.eventradar.data.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.toObjects
 import kotlinx.coroutines.channels.awaitClose
@@ -98,6 +100,17 @@ class UserRepository @Inject constructor(
         return try {
             val document = firestore.collection("users").document(userId).get().await()
             Result.success(document.toObject(User::class.java))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun updateUserLocation(userId: String, location: Location): Result<Unit> {
+        return try {
+            val userRef = firestore.collection("users").document(userId)
+            // Ažuriramo samo jedno polje - 'lastKnownLocation'
+            userRef.update("lastKnownLocation", GeoPoint(location.latitude, location.longitude)).await()
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
