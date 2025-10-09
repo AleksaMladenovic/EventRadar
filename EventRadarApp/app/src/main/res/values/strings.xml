@@ -23,6 +23,8 @@
     <string name="error_password_too_short">Password must be at least 6 characters</string>
     <string name="error_username_taken">This username is already taken</string>
     <string name="error_login_failed">Login failed. Please check your credentials.</string>
+    <string name="error_username_too_short">Username must be at least 3 characters</string>
+    <string name="error_invalid_phone">Please enter a valid phone number</string>
 
     <!-- Welcome Screen -->
     <string name="welcome_title">Welcome to</string>

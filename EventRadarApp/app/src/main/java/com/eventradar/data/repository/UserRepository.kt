@@ -116,4 +116,17 @@ class UserRepository @Inject constructor(
         }
     }
 
+    suspend fun doesUsernameExist(username: String): Boolean {
+        return try {
+            val snapshot = firestore.collection("users")
+                .whereEqualTo("username", username)
+                .limit(1)
+                .get()
+                .await()
+            !snapshot.isEmpty
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 }
