@@ -155,4 +155,8 @@
     <string name="save_changes_button">Save Changes</string>
     <string name="profile_update_success">Profile updated successfully!</string>
     <string name="profile_update_failed">Failed to update profile.</string>
+
+    <string name="error_passwords_do_not_match">New passwords do not match</string>
+    <string name="error_incorrect_password">Incorrect current password. Please try again.</string>
+    <string name="change_password">Change Password</string>
 </resources>

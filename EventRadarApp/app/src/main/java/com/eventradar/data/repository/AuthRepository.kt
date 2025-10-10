@@ -4,7 +4,9 @@ import android.net.Uri
 import com.eventradar.data.model.User
 import com.eventradar.ui.auth.AuthState
 import com.google.firebase.auth.AuthResult
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,5 +54,29 @@ class AuthRepository @Inject constructor(
 
     fun getCurrentUserId():String?{
         return auth.currentUser?.uid;
+    }
+
+    suspend fun changePassword(oldPassword: String, newPassword: String): Result<Unit> {
+        val currentUser = auth.currentUser
+        if (currentUser == null || currentUser.email == null) {
+            return Result.failure(Exception("User is not properly authenticated."))
+        }
+
+        return try {
+            val credential = EmailAuthProvider.getCredential(currentUser.email!!, oldPassword)
+
+            currentUser.reauthenticate(credential).await()
+
+            currentUser.updatePassword(newPassword).await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            if (e is FirebaseAuthException) {
+                if (e.errorCode == "ERROR_WRONG_PASSWORD") {
+                    return Result.failure(Exception("Incorrect current password."))
+                }
+            }
+            Result.failure(e)
+        }
     }
 }

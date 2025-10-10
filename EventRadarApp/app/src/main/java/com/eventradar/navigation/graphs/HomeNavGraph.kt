@@ -12,6 +12,7 @@ import androidx.navigation.navArgument
 import com.eventradar.navigation.Routes
 import com.eventradar.ui.add_event.AddEventScreen
 import com.eventradar.ui.auth.AuthViewModel
+import com.eventradar.ui.change_password.ChangePasswordScreen
 import com.eventradar.ui.edit_profile.EditProfileScreen
 import com.eventradar.ui.event_details.EventDetailsScreen
 import com.eventradar.ui.events_list.EventsListScreen
@@ -83,6 +84,9 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
                 onNavigateToEditProfile = {
                     homeNavController.navigate(Routes.EDIT_PROFILE_SCREEN)
                 },
+                onNavigateToChangePassword = {
+                    homeNavController.navigate(Routes.CHANGE_PASSWORD_SCREEN)
+                }
             )
         }
         composable(
@@ -196,5 +200,12 @@ fun HomeNavGraph(homeNavController: NavHostController, rootNavController: NavCon
                 }
             )
         }
+
+        composable(Routes.CHANGE_PASSWORD_SCREEN) {
+            ChangePasswordScreen(
+                onNavigateBack = { homeNavController.popBackStack() }
+            )
+        }
+
     }
 }

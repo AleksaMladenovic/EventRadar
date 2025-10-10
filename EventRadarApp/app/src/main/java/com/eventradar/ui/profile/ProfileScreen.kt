@@ -33,6 +33,7 @@ fun ProfileScreen(
     onNavigateToMyEvents : (String) -> Unit,
     onNavigateToAttendingEvents : (String) -> Unit,
     onNavigateToEditProfile: () -> Unit,
+    onNavigateToChangePassword: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
@@ -55,6 +56,7 @@ fun ProfileScreen(
                     onNavigateToMyEvents,
                     onNavigateToAttendingEvents,
                     onNavigateToEditProfile,
+                    onNavigateToChangePassword,
                 )
             }
         }
@@ -68,6 +70,7 @@ private fun ProfileContent(
     onNavigateToMyEvents : (String) -> Unit,
     onNavigateToAttendingEvents : (String) -> Unit,
     onNavigateToEditProfile: () -> Unit,
+    onNavigateToChangePassword: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -141,6 +144,14 @@ private fun ProfileContent(
         OutlinedButton(onClick = onNavigateToEditProfile) {
             Text(stringResource(id = R.string.edit_profile_title))
         }
+        // Dugme za promenu sifre
+        OutlinedButton(
+            onClick = onNavigateToChangePassword,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(stringResource(R.string.change_password))
+        }
+
         // Dugme za moje event-e
         Button(onClick = {onNavigateToMyEvents(user.uid)}) {
             Text(stringResource(id = R.string.my_events))
