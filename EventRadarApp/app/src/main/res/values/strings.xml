@@ -159,4 +159,5 @@
     <string name="error_passwords_do_not_match">New passwords do not match</string>
     <string name="error_incorrect_password">Incorrect current password. Please try again.</string>
     <string name="change_password">Change Password</string>
+    <string name="profile_title">My Profile</string>
 </resources>
